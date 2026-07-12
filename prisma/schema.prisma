@@ -59,7 +59,22 @@ model User {
   accounts  Account[]
   sessions  Session[]
   projects  Project[]
+  datasets  Dataset[]
   usage     UsageLog[]
+  apiKeys   ApiKey[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  keyPrefix  String
+  keyHash    String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum ProjectModule {
@@ -121,8 +136,10 @@ model FileRecord {
   createdAt        DateTime @default(now())
   cleanedContent   String?  @db.Text @map("cleanedcontent")
   sizeBytes        Int?     @map("sizebytes")
+  rawBuffer        Json?    @map("rawbuffer")
 
-  batch UploadBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batch       UploadBatch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  datasetFiles DatasetFile[]
 }
 
 enum ExportFormat {
@@ -151,4 +168,30 @@ model UsageLog {
   recordedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Dataset {
+  id              String   @id
+  userId          String
+  name            String
+  description     String?
+  fileCount       Int      @default(0)
+  totalSizeBytes  Int?
+  compiledContent String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files DatasetFile[]
+}
+
+model DatasetFile {
+  id           String @id
+  datasetId    String
+  fileRecordId String
+
+  dataset    Dataset    @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  fileRecord FileRecord @relation(fields: [fileRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, fileRecordId])
 }
