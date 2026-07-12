@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import {
   IconArrowLeft,
   IconFileText,
-  IconBrandGithub,
   IconDownload,
   IconCheck,
 } from "@tabler/icons-react";
+import { ExportActions } from "@/components/export-actions";
 
 export const metadata: Metadata = { title: "Export dataset" };
 
@@ -105,21 +104,8 @@ export default function ExportPage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          {/* Download */}
-          <div className="bg-white border border-gray-100 rounded-xl p-5 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">
-                Ready to export
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                316 accepted files · ~1.2 GB
-              </p>
-            </div>
-            <Button variant="primary">
-              <IconDownload size={15} />
-              Download dataset
-            </Button>
-          </div>
+          {/* Download + send */}
+          <ExportActions />
         </div>
 
         {/* Data Card — 2 cols */}

@@ -1,14 +1,12 @@
-// =============================================================================
-// EXPORT ROUTE — DB MODE only
-//
-// Reads FileRecord rows from the database and generates a DatasetExport entry.
-// In TEMP MODE use /api/download instead (works from memory-store).
-// =============================================================================
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { generateDataCard } from "@/lib/data-card";
+import {
+  buildBatchDataCard,
+  buildExportZip,
+  type ExportFileRow,
+} from "@/lib/export-builder";
 
 const exportSchema = z.object({
   batchId: z.string(),
@@ -44,30 +42,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Batch not found" }, { status: 404 });
   }
 
-  // Generate data card
-  const dataCard = generateDataCard(
-    batchId,
-    batch.files.map((f) => ({
-      fileType: f.fileType,
-      sizeMb: 0,
-      cleaningActions: Array.isArray(f.cleaningActions)
-        ? (f.cleaningActions as { type: string; description: string; appliedAt: string }[])
-        : [],
-      confidenceScore: f.confidenceScore ?? 0,
-      flaggedForReview: f.flaggedForReview,
-      rejected: false,
-    }))
+  const files: ExportFileRow[] = batch.files;
+  const dataCard = buildBatchDataCard(batchId, files);
+  const zipBuffer = await buildExportZip(
+    files,
+    format,
+    session.user.email ?? "unknown"
   );
 
-  // TODO: generate actual file using format — stub returns data card JSON
   const exportRecord = await db.datasetExport.create({
-    data: {
-      batchId,
-      format,
-      downloadUrl: null, // set after actual file generation
-      dataCardUrl: null,
-    },
+    data: { batchId, format },
   });
 
-  return NextResponse.json({ exportId: exportRecord.id, dataCard }, { status: 201 });
+  const filename = `dataforge-${batchId.slice(0, 8)}-${format.toLowerCase()}.zip`;
+  return new NextResponse(zipBuffer as unknown as BodyInit, {
+    status: 201,
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "X-Export-Id": exportRecord.id,
+      "X-Data-Card": JSON.stringify(dataCard),
+      "Access-Control-Expose-Headers": "Content-Disposition, X-Export-Id, X-Data-Card",
+    },
+  });
 }

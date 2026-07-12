@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SendToMenu } from "@/components/send-to-menu";
 import { Badge } from "@/components/ui/badge";
 
 interface CleaningAction {
@@ -301,7 +302,8 @@ export function WorkspaceSection() {
                 <IconTrash size={14} />
                 Clear all
               </Button>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                <SendToMenu disabled={files.length === 0} />
                 <Button
                   variant="primary"
                   size="sm"
