@@ -1,12 +1,47 @@
 import { cn } from "@/lib/utils";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  showPasswordToggle?: boolean;
+  passwordVisible?: boolean;
+  onTogglePassword?: () => void;
 }
 
-export function Input({ label, error, className, id, ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  className,
+  id,
+  showPasswordToggle,
+  passwordVisible,
+  onTogglePassword,
+  ...props
+}: InputProps) {
+  const isPasswordField =
+    props.type === "password" || props.type === "text";
+
+  const icon = passwordVisible ? (
+    <IconEyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+  ) : (
+    <IconEye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+  );
+
+  const inputElement = (
+    <input
+      id={id}
+      className={cn(
+        "input",
+        error && "border-red-400 focus:ring-red-400",
+        showPasswordToggle && isPasswordField && "pr-10",
+        className
+      )}
+      {...props}
+    />
+  );
+
   return (
     <div className="w-full">
       {label && (
@@ -17,11 +52,21 @@ export function Input({ label, error, className, id, ...props }: InputProps) {
           {label}
         </label>
       )}
-      <input
-        id={id}
-        className={cn("input", error && "border-red-400 focus:ring-red-400", className)}
-        {...props}
-      />
+      {showPasswordToggle && isPasswordField ? (
+        <div className="relative">
+          {inputElement}
+          <button
+            type="button"
+            onClick={onTogglePassword}
+            className="absolute inset-y-0 right-0 flex items-center pr-3"
+            tabIndex={-1}
+          >
+            {icon}
+          </button>
+        </div>
+      ) : (
+        inputElement
+      )}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );

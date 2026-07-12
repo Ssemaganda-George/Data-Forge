@@ -34,12 +34,15 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("[AUTH] authorize called with:", credentials);
         if (
           credentials?.email === DEV_USER.email &&
           credentials?.password === DEV_PASSWORD
         ) {
+          console.log("[AUTH] authorize success for:", DEV_USER.email);
           return DEV_USER;
         }
+        console.log("[AUTH] authorize failed — credentials did not match");
         return null;
       },
     }),
