@@ -5,7 +5,6 @@
  * calls clearFiles() (i.e. on sign-out).
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const XLSX = require("xlsx") as typeof import("xlsx");
 
 
@@ -247,7 +246,6 @@ export async function runProcessing(
     buffer
   ) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const mammoth = require("mammoth") as typeof import("mammoth");
 
       // 1. Extract plain text
@@ -364,7 +362,6 @@ export async function runProcessing(
     try {
       // Lazy require — must not be bundled by webpack (serverExternalPackages in next.config.mjs)
       // pdf-parse v2 API: new PDFParse({ data }) then .getText()
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { PDFParse } = require("pdf-parse") as {
         PDFParse: new (opts: { data: Uint8Array }) => {
           getText: () => Promise<{ text: string; pages: string[]; total: number }>;
