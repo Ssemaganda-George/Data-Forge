@@ -5,17 +5,6 @@
  * calls clearFiles() (i.e. on sign-out).
  */
 
-if (typeof globalThis.DOMMatrix === "undefined") {
-  try {
-    const { DOMMatrix } = require("jsdom");
-    globalThis.DOMMatrix = DOMMatrix;
-  } catch {
-    globalThis.DOMMatrix = class DOMMatrix {
-      constructor(init?: string | number[]) {}
-    } as unknown as typeof DOMMatrix;
-  }
-}
-
 const XLSX = require("xlsx") as typeof import("xlsx");
 
 
@@ -371,18 +360,9 @@ export async function runProcessing(
   // ── PDF ───────────────────────────────────────────────────────────────────
   if (fileType === "application/pdf" && buffer) {
     try {
-      // Lazy require — must not be bundled by webpack (serverExternalPackages in next.config.mjs)
-      // pdf-parse v2 API: new PDFParse({ data }) then .getText()
-      const { PDFParse } = require("pdf-parse") as {
-        PDFParse: new (opts: { data: Uint8Array }) => {
-          getText: () => Promise<{ text: string; pages: string[]; total: number }>;
-          doc?: { numPages: number };
-        };
-      };
-      const parser = new PDFParse({ data: new Uint8Array(buffer) });
-      const result = await parser.getText();
-      const text = result.text;
-      const pages = result.total;
+      const data = await require("pdf-parse")(buffer);
+      const text = data.text;
+      const pages = data.numpages;
       const wordCount = text.split(/\s+/).filter(Boolean).length;
 
       // Detect image-heavy / scanned PDFs: fewer than 5 words per KB suggests low text density
