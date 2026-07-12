@@ -119,7 +119,7 @@ model FileRecord {
   flaggedForReview Boolean  @default(false)
   processedAt      DateTime?
   createdAt        DateTime @default(now())
-  cleanedContent   String?  @db.Text
+  cleanedContent   String?  @db.Text @map("cleanedcontent")
 
   batch UploadBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 }
