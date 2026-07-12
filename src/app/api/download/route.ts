@@ -9,11 +9,18 @@ import {
 } from "@/lib/export-builder";
 import JSZip from "jszip";
 
-async function getUserExportFiles(userId: string): Promise<ExportFileRow[]> {
+async function getUserExportFiles(userId: string, fileId?: string): Promise<ExportFileRow[]> {
   return db.fileRecord.findMany({
-    where: { batch: { project: { userId } } },
+    where: {
+      batch: { project: { userId } },
+      ...(fileId ? { id: fileId } : {}),
+    },
     orderBy: { createdAt: "desc" },
   });
+}
+
+function safeFilename(name: string) {
+  return name.replace(/[^\w.-]+/g, "_").slice(0, 80) || "export";
 }
 
 export async function GET(req: NextRequest) {
@@ -22,7 +29,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const files = await getUserExportFiles(session.user.id);
+  const fileId = req.nextUrl.searchParams.get("fileId") ?? undefined;
+  const files = await getUserExportFiles(session.user.id, fileId);
   if (files.length === 0) {
     return NextResponse.json({ error: "No files to export" }, { status: 400 });
   }
@@ -41,7 +49,8 @@ export async function GET(req: NextRequest) {
     compressionOptions: { level: 6 },
   });
 
-  const filename = `dataforge-export-${ts}.zip`;
+  const base = fileId ? safeFilename(files[0].originalName) : "dataforge-export";
+  const filename = `${base}-${ts}.zip`;
   return new NextResponse(zipBuffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/zip",
@@ -61,9 +70,10 @@ export async function POST(req: NextRequest) {
     format?: "CSV" | "JSON" | "PARQUET" | "COCO";
     destination?: "kaggle";
     title?: string;
+    fileId?: string;
   };
 
-  const files = await getUserExportFiles(session.user.id);
+  const files = await getUserExportFiles(session.user.id, body.fileId);
   if (files.length === 0) {
     return NextResponse.json({ error: "No files to export" }, { status: 400 });
   }
@@ -90,7 +100,11 @@ export async function POST(req: NextRequest) {
 
     const { decryptSecret } = await import("@/lib/secret-box");
     const { pushZipToKaggle, slugifyDatasetTitle } = await import("@/lib/kaggle-client");
-    const title = body.title?.trim() || `DataForge export ${new Date().toISOString().slice(0, 10)}`;
+    const title =
+      body.title?.trim() ||
+      (body.fileId && files[0]
+        ? `DataForge: ${files[0].originalName}`
+        : `DataForge export ${new Date().toISOString().slice(0, 10)}`);
     const slug = `${slugifyDatasetTitle(title)}-${Date.now().toString(36)}`;
 
     try {

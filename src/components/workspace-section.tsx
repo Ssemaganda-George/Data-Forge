@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { SendToMenu } from "@/components/send-to-menu";
+import { FileExportActions } from "@/components/file-export-actions";
 import { Badge } from "@/components/ui/badge";
 
 interface CleaningAction {
@@ -49,6 +49,7 @@ export function WorkspaceSection() {
   const [downloading, setDownloading] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   // ── Load existing session files ──
   const loadFiles = useCallback(async () => {
@@ -62,6 +63,16 @@ export function WorkspaceSection() {
   useEffect(() => {
     loadFiles();
   }, [loadFiles]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  function showToast(message: string, tone: "success" | "error" = "success") {
+    setToast({ message, tone });
+  }
 
   // ── Drop handler ──
   const onDrop = useCallback(
@@ -262,18 +273,19 @@ export function WorkspaceSection() {
 
       {/* Results panel */}
       {files.length > 0 && (
-        <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-3.5">
+            <div className="flex items-center gap-3">
               <p className="text-sm font-semibold text-gray-900">
                 {files.length} file{files.length !== 1 ? "s" : ""} cleaned
               </p>
-              <span className="text-xs text-gray-400">
-                Avg score:{" "}
+              <span className="hidden h-3 w-px bg-gray-200 sm:block" aria-hidden />
+              <span className="text-xs text-gray-500">
+                Avg score{" "}
                 <span
                   className={cn(
-                    "font-medium",
+                    "font-semibold tabular-nums",
                     avgScore >= 0.8
                       ? "text-green-600"
                       : avgScore >= 0.6
@@ -285,10 +297,10 @@ export function WorkspaceSection() {
                 </span>
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={loadFiles}
-                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                 title="Refresh"
               >
                 <IconRefresh size={15} />
@@ -296,62 +308,95 @@ export function WorkspaceSection() {
               <Button
                 variant="secondary"
                 size="sm"
+                onClick={() => download()}
+                loading={downloading}
+              >
+                <IconDownload size={14} />
+                Download all
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={clearAll}
                 loading={clearing}
+                className="text-gray-500 hover:text-red-600"
               >
                 <IconTrash size={14} />
                 Clear all
               </Button>
-              <div className="flex items-center gap-2">
-                <SendToMenu disabled={files.length === 0} />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => download()}
-                  loading={downloading}
-                >
-                  <IconDownload size={14} />
-                  Download ZIP
-                </Button>
-              </div>
             </div>
           </div>
+
+          {toast && (
+            <div
+              className={cn(
+                "border-b px-5 py-2 text-xs font-medium",
+                toast.tone === "error"
+                  ? "border-red-100 bg-red-50 text-red-700"
+                  : "border-green-100 bg-green-50 text-green-700"
+              )}
+            >
+              {toast.message}
+            </div>
+          )}
 
           {/* File rows */}
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-50">
-                <th className="text-left px-5 py-2.5 text-xs font-medium text-gray-500">File</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 hidden sm:table-cell">Type</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Score</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Status</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 hidden md:table-cell">Actions</th>
+              <tr className="border-b border-gray-50 bg-gray-50/50">
+                <th className="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  File
+                </th>
+                <th className="hidden px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 sm:table-cell">
+                  Type
+                </th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  Score
+                </th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  Status
+                </th>
+                <th className="hidden px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">
+                  Pipeline
+                </th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  Export
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {files.map((f) => (
                 <Fragment key={f.id}>
                   <tr
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() =>
-                      setExpandedId(expandedId === f.id ? null : f.id)
-                    }
+                    className={cn(
+                      "transition-colors hover:bg-gray-50/80",
+                      expandedId === f.id && "bg-gray-50/60"
+                    )}
                   >
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-gray-800 truncate max-w-[200px]">
+                    <td
+                      className="cursor-pointer px-5 py-3"
+                      onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    >
+                      <p className="max-w-[220px] truncate font-medium text-gray-800">
                         {f.originalName}
                       </p>
                       <p className="text-xs text-gray-400">{formatBytes(f.sizeBytes)}</p>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400 hidden sm:table-cell">
+                    <td
+                      className="hidden cursor-pointer px-3 py-3 text-xs text-gray-500 sm:table-cell"
+                      onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    >
                       {f.fileType.split("/")[1] ?? f.fileType}
                     </td>
-                    <td className="px-4 py-3">
+                    <td
+                      className="cursor-pointer px-3 py-3"
+                      onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    >
                       <div className="flex items-center gap-2">
-                        <div className="w-14 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-12 overflow-hidden rounded-full bg-gray-100">
                           <div
                             className={cn(
-                              "h-full rounded-full",
+                              "h-full rounded-full transition-all",
                               f.confidenceScore >= 0.8
                                 ? "bg-green-500"
                                 : f.confidenceScore >= 0.6
@@ -361,37 +406,51 @@ export function WorkspaceSection() {
                             style={{ width: `${f.confidenceScore * 100}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs tabular-nums text-gray-600">
                           {(f.confidenceScore * 100).toFixed(0)}%
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td
+                      className="cursor-pointer px-3 py-3"
+                      onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    >
                       <Badge variant={f.flaggedForReview ? "flagged" : "ready"} />
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <div className="flex flex-wrap gap-1">
+                    <td
+                      className="hidden cursor-pointer px-3 py-3 lg:table-cell"
+                      onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    >
+                      <div className="flex max-w-[200px] flex-wrap gap-1">
                         {f.cleaningActions.slice(0, 2).map((a) => (
                           <span
                             key={a.type}
-                            className="inline-flex px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600 font-mono"
+                            className="inline-flex rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-600"
                           >
                             {a.type}
                           </span>
                         ))}
                         {f.cleaningActions.length > 2 && (
-                          <span className="text-xs text-gray-400">
+                          <span className="text-[10px] text-gray-400">
                             +{f.cleaningActions.length - 2}
                           </span>
                         )}
                       </div>
                     </td>
+                    <td className="px-4 py-2.5">
+                      <FileExportActions
+                        fileId={f.id}
+                        fileName={f.originalName}
+                        onDeleted={loadFiles}
+                        onNotify={showToast}
+                      />
+                    </td>
                   </tr>
 
                   {/* Expanded detail row */}
                   {expandedId === f.id && (
-                    <tr key={`${f.id}-detail`} className="bg-gray-50">
-                      <td colSpan={5} className="px-5 py-4 space-y-4">
+                    <tr key={`${f.id}-detail`} className="bg-gray-50/80">
+                      <td colSpan={6} className="space-y-4 px-5 py-4">
                         {/* Cleaned content */}
                         {f.cleanedContent && (
                           <div>
