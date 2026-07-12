@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatBytes } from "@/lib/utils";
 import JSZip from "jszip";
 
-export async function GET() {
-  const session = await getServerSession();
+export async function GET(req: NextRequest) {
+  const session = await authenticateRequest(req);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

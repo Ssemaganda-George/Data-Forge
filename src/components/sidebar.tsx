@@ -8,6 +8,7 @@ import {
   IconDatabase,
   IconChartBar,
   IconSettings,
+  IconKey,
   IconBolt,
   IconLogout,
 } from "@tabler/icons-react";
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/projects", label: "Projects", icon: IconFolders },
   { href: "/datasets", label: "Datasets", icon: IconDatabase },
   { href: "/usage", label: "Usage", icon: IconChartBar },
+  { href: "/settings/api-keys", label: "API Keys", icon: IconKey },
   { href: "/settings/billing", label: "Settings", icon: IconSettings },
 ];
 

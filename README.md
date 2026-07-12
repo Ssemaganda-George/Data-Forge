@@ -486,7 +486,61 @@ Optionally restore the Google + magic-link UI (replace the credentials form with
 | `POST` | `/api/projects` | DB | Create a project |
 | `GET` | `/api/jobs?batchId=` | DB | Poll batch processing status |
 | `POST` | `/api/export` | DB | Generate DatasetExport + Data Card |
+| `GET` | `/api/keys` | DB | List your API keys (session only) |
+| `POST` | `/api/keys` | DB | Create an API key (session only, plaintext shown once) |
+| `DELETE` | `/api/keys/[id]` | DB | Revoke an API key (session only) |
 | `POST` | `/api/signout` | Both | Clear memory store, then NextAuth signs out |
+
+---
+
+## API access & MCP
+
+`/api/upload`, `/api/projects`, `/api/jobs`, `/api/export`, and `/api/download`
+all accept an API key instead of a browser session — send it as
+`Authorization: Bearer dfk_...`. Create a key under **Settings → API Keys**.
+
+### From Kaggle / Google Colab (or any Python script)
+
+Notebooks don't speak MCP — call the REST API directly:
+
+```python
+import requests
+
+API_KEY = "dfk_..."
+BASE = "https://data-forge-jet.vercel.app"
+headers = {"Authorization": f"Bearer {API_KEY}"}
+
+projects = requests.get(f"{BASE}/api/projects", headers=headers).json()
+
+with open("scan.pdf", "rb") as f:
+    requests.post(f"{BASE}/api/upload", headers=headers, files={"file": f})
+
+zip_bytes = requests.get(f"{BASE}/api/download", headers=headers).content
+open("dataset.zip", "wb").write(zip_bytes)
+```
+
+### From an MCP client (Claude Desktop, Claude Code, Cursor)
+
+MCP is for AI agents/IDEs, not notebooks. `mcp-server/server.mjs` wraps the
+same REST API as MCP tools (`list_projects`, `create_project`, `get_batch`,
+`export_dataset`, `download_dataset`). Point your MCP client config at it:
+
+```json
+{
+  "mcpServers": {
+    "dataforge": {
+      "command": "node",
+      "args": ["mcp-server/server.mjs"],
+      "env": {
+        "DATAFORGE_API_KEY": "dfk_...",
+        "DATAFORGE_BASE_URL": "https://data-forge-jet.vercel.app"
+      }
+    }
+  }
+}
+```
+
+Or run it standalone: `npm run mcp`.
 
 ---
 

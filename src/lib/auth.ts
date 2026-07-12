@@ -3,6 +3,38 @@
 // =============================================================================
 
 import { createSupabaseClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { hashApiKey, looksLikeApiKey } from "@/lib/api-keys";
+
+// Accepts either the browser session cookie or an `Authorization: Bearer dfk_...`
+// API key, so external callers (scripts, notebooks, MCP tools) can hit the same
+// routes as the dashboard.
+export async function authenticateRequest(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  const bearer = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+
+  if (bearer && looksLikeApiKey(bearer)) {
+    const record = await db.apiKey.findFirst({
+      where: { keyHash: hashApiKey(bearer), revokedAt: null },
+      include: { user: true },
+    });
+    if (!record) return null;
+
+    db.apiKey
+      .update({ where: { id: record.id }, data: { lastUsedAt: new Date() } })
+      .catch(() => {});
+
+    return {
+      user: {
+        id: record.user.id,
+        email: record.user.email,
+        name: record.user.name,
+      },
+    };
+  }
+
+  return getServerSession();
+}
 
 export async function getServerSession() {
   try {
