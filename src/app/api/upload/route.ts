@@ -7,7 +7,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { runProcessing } from "@/lib/memory-store";
-import { v4 as uuidv4 } from "uuid";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
