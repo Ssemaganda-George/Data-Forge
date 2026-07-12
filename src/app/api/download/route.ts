@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
-import { db } from "@/lib/db";
 import {
-  buildDatacardJson,
-  buildCleanedDataText,
   buildExportZip,
-  type ExportFileRow,
+  type ExportFormat,
 } from "@/lib/export-builder";
-import JSZip from "jszip";
-
-async function getUserExportFiles(userId: string, fileId?: string): Promise<ExportFileRow[]> {
-  return db.fileRecord.findMany({
-    where: {
-      batch: { project: { userId } },
-      ...(fileId ? { id: fileId } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  });
-}
+import { pushToGitHub, pushToKaggle } from "@/lib/export-destinations";
+import { resolveExportFiles } from "@/lib/export-scope";
 
 function safeFilename(name: string) {
   return name.replace(/[^\w.-]+/g, "_").slice(0, 80) || "export";
+}
+
+function zipFilename(files: { originalName: string }[], format: string, scope: { fileId?: string; batchId?: string }) {
+  const ts = Date.now();
+  if (scope.fileId && files[0]) {
+    return `${safeFilename(files[0].originalName)}-${format.toLowerCase()}-${ts}.zip`;
+  }
+  if (scope.batchId) {
+    return `dataforge-batch-${format.toLowerCase()}-${ts}.zip`;
+  }
+  return `dataforge-export-${format.toLowerCase()}-${ts}.zip`;
 }
 
 export async function GET(req: NextRequest) {
@@ -30,27 +29,24 @@ export async function GET(req: NextRequest) {
   }
 
   const fileId = req.nextUrl.searchParams.get("fileId") ?? undefined;
-  const files = await getUserExportFiles(session.user.id, fileId);
+  const batchId = req.nextUrl.searchParams.get("batchId") ?? undefined;
+  const formatParam = req.nextUrl.searchParams.get("format") ?? "JSON";
+  const format = (["CSV", "JSON", "PARQUET", "COCO"].includes(formatParam)
+    ? formatParam
+    : "JSON") as ExportFormat;
+
+  const files = await resolveExportFiles(session.user.id, { fileId, batchId });
   if (files.length === 0) {
     return NextResponse.json({ error: "No files to export" }, { status: 400 });
   }
 
-  const ts = Date.now();
-  const datacard = buildDatacardJson(files, session.user.email ?? "unknown");
-  const cleanedDataText = buildCleanedDataText(files);
+  const zipBuffer = await buildExportZip(
+    files,
+    format,
+    session.user.email ?? "unknown"
+  );
 
-  const zip = new JSZip();
-  zip.file("datacard.json", JSON.stringify(datacard, null, 2));
-  zip.file("cleaned-data.txt", cleanedDataText);
-
-  const zipBuffer = await zip.generateAsync({
-    type: "nodebuffer",
-    compression: "DEFLATE",
-    compressionOptions: { level: 6 },
-  });
-
-  const base = fileId ? safeFilename(files[0].originalName) : "dataforge-export";
-  const filename = `${base}-${ts}.zip`;
+  const filename = zipFilename(files, format, { fileId, batchId });
   return new NextResponse(zipBuffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/zip",
@@ -67,13 +63,19 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json().catch(() => ({}))) as {
-    format?: "CSV" | "JSON" | "PARQUET" | "COCO";
-    destination?: "kaggle";
+    format?: ExportFormat;
+    destination?: "kaggle" | "github";
     title?: string;
     fileId?: string;
+    batchId?: string;
+    repo?: string;
+    tag?: string;
   };
 
-  const files = await getUserExportFiles(session.user.id, body.fileId);
+  const files = await resolveExportFiles(session.user.id, {
+    fileId: body.fileId,
+    batchId: body.batchId,
+  });
   if (files.length === 0) {
     return NextResponse.json({ error: "No files to export" }, { status: 400 });
   }
@@ -85,50 +87,49 @@ export async function POST(req: NextRequest) {
     session.user.email ?? "unknown"
   );
 
+  const defaultTitle =
+    body.fileId && files[0]
+      ? `DataForge: ${files[0].originalName}`
+      : body.batchId
+        ? `DataForge batch ${body.batchId.slice(0, 8)}`
+        : `DataForge export ${new Date().toISOString().slice(0, 10)}`;
+
   if (body.destination === "kaggle") {
-    const conn = await db.platformConnection.findUnique({
-      where: {
-        userId_platform: { userId: session.user.id, platform: "KAGGLE" },
-      },
-    });
-    if (!conn) {
-      return NextResponse.json(
-        { error: "Connect Kaggle under Settings → Integrations first" },
-        { status: 400 }
-      );
-    }
-
-    const { decryptSecret } = await import("@/lib/secret-box");
-    const { pushZipToKaggle, slugifyDatasetTitle } = await import("@/lib/kaggle-client");
-    const title =
-      body.title?.trim() ||
-      (body.fileId && files[0]
-        ? `DataForge: ${files[0].originalName}`
-        : `DataForge export ${new Date().toISOString().slice(0, 10)}`);
-    const slug = `${slugifyDatasetTitle(title)}-${Date.now().toString(36)}`;
-
+    const title = body.title?.trim() || defaultTitle;
     try {
-      const result = await pushZipToKaggle(
-        { username: conn.username, key: decryptSecret(conn.credential) },
-        zipBuffer,
-        title,
-        slug
-      );
-      return NextResponse.json({
-        ok: true,
-        platform: "kaggle",
-        title,
-        slug,
-        url: result.url ?? `https://www.kaggle.com/datasets/${conn.username}/${slug}`,
-      });
+      const result = await pushToKaggle(session.user.id, zipBuffer, title);
+      return NextResponse.json({ ok: true, ...result });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Kaggle upload failed";
       return NextResponse.json({ error: message }, { status: 502 });
     }
   }
 
-  const ts = Date.now();
-  const filename = `dataforge-export-${format.toLowerCase()}-${ts}.zip`;
+  if (body.destination === "github") {
+    const repo = body.repo?.trim();
+    if (!repo) {
+      return NextResponse.json({ error: "GitHub repo (owner/name) is required" }, { status: 400 });
+    }
+    const title = body.title?.trim() || defaultTitle;
+    try {
+      const result = await pushToGitHub(
+        session.user.id,
+        zipBuffer,
+        repo,
+        title,
+        body.tag?.trim()
+      );
+      return NextResponse.json({ ok: true, ...result });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "GitHub upload failed";
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+  }
+
+  const filename = zipFilename(files, format, {
+    fileId: body.fileId,
+    batchId: body.batchId,
+  });
   return new NextResponse(zipBuffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/zip",

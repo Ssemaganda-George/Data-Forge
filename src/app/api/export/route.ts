@@ -5,12 +5,17 @@ import { z } from "zod";
 import {
   buildBatchDataCard,
   buildExportZip,
-  type ExportFileRow,
 } from "@/lib/export-builder";
+import { pushToGitHub, pushToKaggle } from "@/lib/export-destinations";
+import { resolveExportFiles } from "@/lib/export-scope";
 
 const exportSchema = z.object({
   batchId: z.string(),
   format: z.enum(["CSV", "JSON", "PARQUET", "COCO"]),
+  destination: z.enum(["kaggle", "github"]).optional(),
+  title: z.string().optional(),
+  repo: z.string().optional(),
+  tag: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -28,27 +33,67 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { batchId, format } = parsed.data;
+  const { batchId, format, destination, title, repo, tag } = parsed.data;
 
   const batch = await db.uploadBatch.findFirst({
     where: {
       id: batchId,
       project: { userId: session.user.id },
     },
-    include: { files: true },
   });
 
   if (!batch) {
     return NextResponse.json({ error: "Batch not found" }, { status: 404 });
   }
 
-  const files: ExportFileRow[] = batch.files;
+  const files = await resolveExportFiles(session.user.id, { batchId });
+  if (files.length === 0) {
+    return NextResponse.json({ error: "No files in this batch" }, { status: 400 });
+  }
+
   const dataCard = buildBatchDataCard(batchId, files);
   const zipBuffer = await buildExportZip(
     files,
     format,
     session.user.email ?? "unknown"
   );
+
+  const defaultTitle = `DataForge batch ${batchId.slice(0, 8)}`;
+
+  if (destination === "kaggle") {
+    try {
+      const result = await pushToKaggle(
+        session.user.id,
+        zipBuffer,
+        title?.trim() || defaultTitle
+      );
+      await db.datasetExport.create({ data: { batchId, format } });
+      return NextResponse.json({ ok: true, ...result, dataCard });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Kaggle upload failed";
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+  }
+
+  if (destination === "github") {
+    if (!repo?.trim()) {
+      return NextResponse.json({ error: "GitHub repo (owner/name) is required" }, { status: 400 });
+    }
+    try {
+      const result = await pushToGitHub(
+        session.user.id,
+        zipBuffer,
+        repo.trim(),
+        title?.trim() || defaultTitle,
+        tag?.trim()
+      );
+      await db.datasetExport.create({ data: { batchId, format } });
+      return NextResponse.json({ ok: true, ...result, dataCard });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "GitHub upload failed";
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+  }
 
   const exportRecord = await db.datasetExport.create({
     data: { batchId, format },

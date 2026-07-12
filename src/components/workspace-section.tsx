@@ -169,7 +169,11 @@ export function WorkspaceSection() {
   async function download() {
     setDownloading(true);
     try {
-      const res = await fetch("/api/download");
+      const res = await fetch("/api/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ format: "JSON" }),
+      });
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         alert(err.error ?? "Download failed");

@@ -12,58 +12,37 @@ import {
   IconTrophy,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import type { ExportFormat } from "@/lib/export-builder";
+import { useExportActions } from "@/hooks/use-export-actions";
 
 interface FileExportActionsProps {
   fileId: string;
   fileName: string;
+  format?: ExportFormat;
   onDeleted?: () => void;
   onNotify?: (message: string, tone?: "success" | "error") => void;
-}
-
-function pythonSnippet(origin: string, fileId: string) {
-  return `import requests
-
-API_KEY = "dfk_..."  # Settings → API Keys
-BASE = "${origin}"
-headers = {"Authorization": f"Bearer {API_KEY}"}
-
-res = requests.get(f"{BASE}/api/download?fileId=${fileId}", headers=headers, timeout=120)
-res.raise_for_status()
-open("dataforge-export.zip", "wb").write(res.content)`;
-}
-
-async function saveDownload(res: Response, fallback: string) {
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const disposition = res.headers.get("Content-Disposition") ?? "";
-  const match = disposition.match(/filename="?([^"]+)"?/);
-  const filename = match?.[1] ?? fallback;
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export function FileExportActions({
   fileId,
   fileName,
+  format = "JSON",
   onDeleted,
   onNotify,
 }: FileExportActionsProps) {
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [kaggleConnected, setKaggleConnected] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-
-  useEffect(() => {
-    fetch("/api/integrations/kaggle")
-      .then((r) => r.json())
-      .then((d: { connected?: boolean }) => setKaggleConnected(!!d.connected))
-      .catch(() => setKaggleConnected(false));
-  }, []);
+  const {
+    busy,
+    kaggleConnected,
+    githubConnected,
+    downloadZip,
+    openColab,
+    copySnippet,
+    pushKaggle,
+    pushGitHub,
+  } = useExportActions({ fileId, format });
 
   useEffect(() => {
     if (!open) return;
@@ -78,83 +57,10 @@ export function FileExportActions({
     onNotify?.(message, tone);
   }
 
-  async function downloadFile() {
-    setBusy("download");
-    try {
-      const res = await fetch(`/api/download?fileId=${encodeURIComponent(fileId)}`);
-      if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(err.error ?? "Download failed");
-      }
-      await saveDownload(res, `${fileName}.zip`);
-      notify("Download started");
-    } catch (err) {
-      notify(err instanceof Error ? err.message : "Download failed", "error");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function openColab() {
-    setBusy("colab");
-    try {
-      const res = await fetch("/api/export/colab");
-      if (!res.ok) throw new Error("Could not generate notebook");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "dataforge-import.ipynb";
-      a.click();
-      URL.revokeObjectURL(url);
-      window.open("https://colab.research.google.com/", "_blank");
-      notify("Notebook saved. Upload it in Colab.");
-    } catch {
-      notify("Colab notebook failed", "error");
-    } finally {
-      setBusy(null);
-      setOpen(false);
-    }
-  }
-
-  async function copySnippet(message = "Python snippet copied") {
-    setBusy("snippet");
-    try {
-      await navigator.clipboard.writeText(pythonSnippet(origin, fileId));
-      notify(message);
-    } catch {
-      notify("Could not copy snippet", "error");
-    } finally {
-      setBusy(null);
-      setOpen(false);
-    }
-  }
-
-  async function pushKaggle() {
-    if (!kaggleConnected) {
-      window.location.href = "/settings/integrations";
-      return;
-    }
-    const title = window.prompt("Kaggle dataset title:", `DataForge: ${fileName}`);
-    if (!title) return;
-
-    setBusy("kaggle");
-    try {
-      const res = await fetch("/api/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination: "kaggle", title, format: "JSON", fileId }),
-      });
-      const data = (await res.json()) as { error?: string; url?: string };
-      if (!res.ok) throw new Error(data.error ?? "Kaggle push failed");
-      notify("Published to Kaggle");
-      if (data.url) window.open(data.url, "_blank");
-    } catch (err) {
-      notify(err instanceof Error ? err.message : "Kaggle push failed", "error");
-    } finally {
-      setBusy(null);
-      setOpen(false);
-    }
+  async function run(action: () => Promise<{ ok: boolean; message: string }>) {
+    const result = await action();
+    notify(result.message, result.ok ? "success" : "error");
+    if (result.ok) setOpen(false);
   }
 
   async function deleteFile() {
@@ -175,22 +81,22 @@ export function FileExportActions({
   }
 
   const menuItems = [
-    { id: "download", label: "Download ZIP", hint: "Datacard + cleaned output", onClick: downloadFile },
-    { id: "colab", label: "Open in Colab", hint: "Starter notebook", icon: IconBrandGoogle, onClick: openColab },
-    { id: "snippet", label: "Copy Python snippet", hint: "For notebooks", icon: IconClipboard, onClick: copySnippet },
+    { id: "download", label: "Download ZIP", hint: `${format} + datacard`, onClick: () => run(downloadZip) },
+    { id: "colab", label: "Open in Colab", hint: "Scoped to this file", icon: IconBrandGoogle, onClick: () => run(openColab) },
+    { id: "snippet", label: "Copy Python snippet", hint: "For notebooks", icon: IconClipboard, onClick: () => run(copySnippet) },
     {
       id: "kaggle",
       label: kaggleConnected ? "Push to Kaggle" : "Connect Kaggle",
       hint: kaggleConnected ? "New dataset" : "Settings → Integrations",
       icon: IconTrophy,
-      onClick: pushKaggle,
+      onClick: () => run(pushKaggle),
     },
     {
       id: "github",
-      label: "GitHub snippet",
-      hint: "Copy upload commands",
+      label: githubConnected ? "Push to GitHub" : "Connect GitHub",
+      hint: githubConnected ? "New release asset" : "Settings → Integrations",
       icon: IconBrandGithub,
-      onClick: () => copySnippet("Snippet copied for GitHub release upload"),
+      onClick: () => run(pushGitHub),
     },
   ];
 
@@ -257,7 +163,7 @@ export function FileExportActions({
         type="button"
         title="Download ZIP"
         disabled={!!busy || deleting}
-        onClick={() => downloadFile()}
+        onClick={() => run(downloadZip)}
         className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
       >
         {busy === "download" ? (
