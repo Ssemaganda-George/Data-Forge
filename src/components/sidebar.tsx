@@ -12,7 +12,6 @@ import {
   IconLogout,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: IconLayoutDashboard },
@@ -31,8 +30,8 @@ export function Sidebar() {
   }
 
   async function handleSignOut() {
-    await fetch("/api/signout", { method: "POST" });
-    signOut({ callbackUrl: "/login" });
+    await fetch("/api/auth/signout", { method: "POST" });
+    window.location.href = "/login";
   }
 
   return (

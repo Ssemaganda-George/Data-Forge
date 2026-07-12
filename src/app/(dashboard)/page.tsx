@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getServerSession } from "@/lib/auth";
 // import { db } from "@/lib/db"; // ← DB MODE: uncomment to fetch real counts
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +82,7 @@ function batchStatusToBadge(
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession();
   const firstName = session?.user.name?.split(" ")[0] ?? "there";
 
   // In production, fetch real counts from DB:
