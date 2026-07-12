@@ -9,6 +9,30 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions } from "next-auth";
 import { db } from "@/lib/db";
 
+async function sendVerificationRequest(params: {
+  identifier: string;
+  url: string;
+  expires: Date;
+  provider: { server: unknown; from: string };
+}) {
+  const { createTransport } = await import("nodemailer");
+  const transport = createTransport(params.provider.server as string);
+
+  try {
+    await transport.sendMail({
+      to: params.identifier,
+      from: params.provider.from,
+      subject: "Sign in to DataForge",
+      text: `Click this link to sign in: ${params.url}`,
+      html: `<p>Click this link to sign in:</p><p><a href="${params.url}">Sign in to DataForge</a></p>`,
+    });
+    console.log("[AUTH] Verification email sent to:", params.identifier);
+  } catch (error) {
+    console.error("[AUTH] Failed to send verification email:", error);
+    throw new Error("Failed to send verification email");
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as NextAuthOptions["adapter"],
   providers: [
@@ -21,8 +45,9 @@ export const authOptions: NextAuthOptions = {
         ]
       : []),
     EmailProvider({
-      server: process.env.EMAIL_SERVER ?? "smtp://localhost:1025",
-      from: process.env.EMAIL_FROM ?? "noreply@dataforge.dev",
+      server: process.env.EMAIL_SERVER,
+      from: process.env.EMAIL_FROM,
+      sendVerificationRequest,
     }),
     CredentialsProvider({
       name: "credentials",
