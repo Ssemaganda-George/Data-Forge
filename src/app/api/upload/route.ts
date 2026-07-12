@@ -19,6 +19,9 @@ import { v4 as uuidv4 } from "uuid";
 
 const MAX_BYTES = 50 * 1024 * 1024; // 50 MB per file in dev
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {

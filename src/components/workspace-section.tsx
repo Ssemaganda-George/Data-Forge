@@ -65,7 +65,24 @@ export function WorkspaceSection() {
   // ── Drop handler ──
   const onDrop = useCallback(
     async (accepted: File[]) => {
-      const newUploads: Uploading[] = accepted.map((f) => ({
+      const tooLarge = accepted.filter((f) => f.size > 4 * 1024 * 1024);
+      if (tooLarge.length > 0) {
+        setUploading((prev) => [
+          ...prev,
+          ...tooLarge.map((f) => ({
+            localId: crypto.randomUUID(),
+            name: f.name,
+            size: f.size,
+            progress: "error" as const,
+            errorMsg: "File exceeds 4 MB limit on this server",
+          })),
+        ]);
+      }
+
+      const valid = accepted.filter((f) => f.size <= 4 * 1024 * 1024);
+      if (valid.length === 0) return;
+
+      const newUploads: Uploading[] = valid.map((f) => ({
         localId: crypto.randomUUID(),
         name: f.name,
         size: f.size,
@@ -206,7 +223,7 @@ export function WorkspaceSection() {
           {isDragActive ? "Drop to clean" : "Drag files here to clean them"}
         </p>
         <p className="mt-1 text-xs text-gray-400">
-          PDFs, images, audio, spreadsheets · 50 MB per file · cleaned instantly
+          PDFs, images, audio, spreadsheets · max 4 MB per file · cleaned instantly
         </p>
       </div>
 
