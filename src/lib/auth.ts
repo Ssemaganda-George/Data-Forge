@@ -13,19 +13,36 @@ export async function getServerSession() {
 
     if (!user) return null;
 
-    const { data: appUser } = await supabase
+    let appUser = await supabase
       .from("User")
       .select("*")
       .eq("id", user.id)
       .single();
 
-    if (!appUser) return null;
+    if (!appUser.data) {
+      const { data: newUser, error: insertError } = await supabase
+        .from("User")
+        .insert({
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || user.email?.split("@")[0],
+          image: user.user_metadata?.avatar_url || null,
+        })
+        .select()
+        .single();
+
+      if (insertError || !newUser) {
+        console.error("[AUTH] Failed to create app user:", insertError);
+        return null;
+      }
+      appUser = { data: newUser } as any;
+    }
 
     return {
       user: {
-        id: appUser.id,
-        email: appUser.email,
-        name: appUser.name,
+        id: appUser.data.id,
+        email: appUser.data.email,
+        name: appUser.data.name,
       },
     };
   } catch (error) {
