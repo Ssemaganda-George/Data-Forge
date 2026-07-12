@@ -20,13 +20,18 @@ export default function SignUpPage() {
       return;
     }
     setLoading(true);
-    // NextAuth email provider creates user on first sign-in
-    const res = await signIn("email", { email, redirect: false });
-    setLoading(false);
-    if (res?.error) {
+    setError("");
+    try {
+      const res = await signIn("email", { email, redirect: false });
+      if (res?.error) {
+        setError("Failed to send signup email. Please try again.");
+      } else {
+        setSent(true);
+      }
+    } catch {
       setError("Something went wrong. Please try again.");
-    } else {
-      setSent(true);
+    } finally {
+      setLoading(false);
     }
   }
 
