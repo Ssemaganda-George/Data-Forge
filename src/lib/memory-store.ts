@@ -5,6 +5,11 @@
  * calls clearFiles() (i.e. on sign-out).
  */
 
+if (typeof globalThis.DOMMatrix === "undefined") {
+  const { DOMMatrix } = require("jsdom");
+  globalThis.DOMMatrix = DOMMatrix;
+}
+
 const XLSX = require("xlsx") as typeof import("xlsx");
 
 
