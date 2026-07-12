@@ -6,8 +6,14 @@
  */
 
 if (typeof globalThis.DOMMatrix === "undefined") {
-  const { DOMMatrix } = require("jsdom");
-  globalThis.DOMMatrix = DOMMatrix;
+  try {
+    const { DOMMatrix } = require("jsdom");
+    globalThis.DOMMatrix = DOMMatrix;
+  } catch {
+    globalThis.DOMMatrix = class DOMMatrix {
+      constructor(init?: string | number[]) {}
+    } as unknown as typeof DOMMatrix;
+  }
 }
 
 const XLSX = require("xlsx") as typeof import("xlsx");
