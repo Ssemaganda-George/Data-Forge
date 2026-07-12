@@ -63,19 +63,21 @@ export async function POST(req: NextRequest) {
     // Run processing
     const result = await runProcessing(file.type || "application/octet-stream", buffer);
 
-    const fileRecord = await db.fileRecord.create({
-      data: {
-        batchId: batch.id,
-        originalName: file.name,
-        fileType: file.type || "application/octet-stream",
-        storageUrl: "",
-        status: "COMPLETE",
-        cleaningActions: result.cleaningActions as any,
-        confidenceScore: result.confidenceScore,
-        flaggedForReview: result.flaggedForReview,
-        processedAt: new Date(),
-      },
-    });
+  const fileRecord = await db.fileRecord.create({
+    data: {
+      batchId: batch.id,
+      originalName: file.name,
+      fileType: file.type || "application/octet-stream",
+      storageUrl: "",
+      status: "COMPLETE",
+      cleaningActions: result.cleaningActions as any,
+      confidenceScore: result.confidenceScore,
+      flaggedForReview: result.flaggedForReview,
+      processedAt: new Date(),
+      sizeBytes: file.size,
+      cleanedContent: result.cleanedContent,
+    },
+  });
 
     return NextResponse.json(
       {

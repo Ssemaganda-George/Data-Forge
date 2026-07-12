@@ -120,6 +120,7 @@ model FileRecord {
   processedAt      DateTime?
   createdAt        DateTime @default(now())
   cleanedContent   String?  @db.Text @map("cleanedcontent")
+  sizeBytes        Int?
 
   batch UploadBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 }

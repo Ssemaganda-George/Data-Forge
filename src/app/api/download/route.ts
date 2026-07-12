@@ -55,7 +55,7 @@ export async function GET() {
       id: f.id,
       originalName: f.originalName,
       fileType: f.fileType,
-      size: formatBytes(0),
+      size: formatBytes(f.sizeBytes ?? 0),
       confidenceScore: f.confidenceScore ?? 0,
       flaggedForReview: f.flaggedForReview,
       cleaningActions: f.cleaningActions ?? [],

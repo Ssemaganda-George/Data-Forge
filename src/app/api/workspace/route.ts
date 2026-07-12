@@ -25,18 +25,18 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      files: files.map((f) => ({
-        id: f.id,
-        originalName: f.originalName,
-        fileType: f.fileType,
-        sizeBytes: 0,
-        status: f.status.toLowerCase(),
-        cleaningActions: f.cleaningActions ?? [],
-        confidenceScore: f.confidenceScore ?? 0,
-        flaggedForReview: f.flaggedForReview,
-        uploadedAt: f.createdAt.toISOString(),
-        cleanedContent: "",
-      })),
+    files: files.map((f) => ({
+      id: f.id,
+      originalName: f.originalName,
+      fileType: f.fileType,
+      sizeBytes: f.sizeBytes ?? 0,
+      status: f.status.toLowerCase(),
+      cleaningActions: f.cleaningActions ?? [],
+      confidenceScore: f.confidenceScore ?? 0,
+      flaggedForReview: f.flaggedForReview,
+      uploadedAt: f.createdAt.toISOString(),
+      cleanedContent: f.cleanedContent ?? "",
+    })),
     });
   } catch (err) {
     console.error("[workspace GET] error:", err);
