@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getServerSession } from "@/lib/auth";
+import { getUsageForUser } from "@/lib/project-queries";
 import { Button } from "@/components/ui/button";
 import { IconCheck } from "@tabler/icons-react";
 
@@ -44,7 +46,11 @@ const PLANS = [
   },
 ];
 
-export default function BillingPage() {
+export default async function BillingPage() {
+  const session = await getServerSession();
+  const usage = await getUsageForUser(session!.user.id);
+  const currentPlan = PLANS.find((p) => p.current)!;
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
@@ -54,16 +60,18 @@ export default function BillingPage() {
         </p>
       </div>
 
-      {/* Current plan */}
       <section className="bg-white border border-gray-100 rounded-xl p-5">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
           Current plan
         </p>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-lg font-semibold text-gray-900">Pro</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {currentPlan.name}
+            </p>
             <p className="text-sm text-gray-500">
-              $49 / month · 38 GB of 100 GB used
+              {currentPlan.price} / month · {usage.monthGb} GB of{" "}
+              {usage.planLimitGb} GB used
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -74,15 +82,15 @@ export default function BillingPage() {
         <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-brand-500 rounded-full"
-            style={{ width: "38%" }}
+            style={{ width: `${usage.quotaPercent}%` }}
           />
         </div>
         <p className="mt-1 text-xs text-gray-400">
-          38 GB / 100 GB · Resets 1 August 2026
+          {usage.monthGb} GB / {usage.planLimitGb} GB · Resets{" "}
+          {usage.resetDate}
         </p>
       </section>
 
-      {/* Plan cards */}
       <section>
         <p className="text-sm font-semibold text-gray-900 mb-4">All plans</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -112,7 +120,10 @@ export default function BillingPage() {
               <p className="mt-1 text-xs text-gray-400">{plan.quota}</p>
               <ul className="mt-4 space-y-2">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-xs text-gray-600">
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-xs text-gray-600"
+                  >
                     <IconCheck
                       size={13}
                       className="text-green-500 shrink-0 mt-0.5"
@@ -128,10 +139,14 @@ export default function BillingPage() {
                   </p>
                 ) : (
                   <Button
-                    variant={plan.id === "enterprise" ? "secondary" : "primary"}
+                    variant={
+                      plan.id === "enterprise" ? "secondary" : "primary"
+                    }
                     className="w-full justify-center"
                   >
-                    {plan.id === "enterprise" ? "Contact sales" : `Upgrade to ${plan.name}`}
+                    {plan.id === "enterprise"
+                      ? "Contact sales"
+                      : `Upgrade to ${plan.name}`}
                   </Button>
                 )}
               </div>

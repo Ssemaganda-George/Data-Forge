@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getServerSession } from "@/lib/auth";
+import {
+  batchStatusToBadge,
+  fileStatusToBadge,
+  getProjectDetail,
+  moduleLabel,
+} from "@/lib/project-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload-zone";
@@ -8,77 +15,17 @@ import {
   IconArrowLeft,
   IconSettings,
   IconShield,
-  IconLanguage,
-  IconCopy,
 } from "@tabler/icons-react";
-import type { BatchStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Project" };
-
-// Placeholder — replace with real DB fetch
-async function getProject(id: string) {
-  const projects: Record<
-    string,
-    {
-      id: string;
-      name: string;
-      module: "LANGUAGE_VOICE" | "BUSINESS_DATA" | "GENERAL";
-      batchId: string;
-      batchStatus: BatchStatus;
-      fileCount: number;
-      processedCount: number;
-    }
-  > = {
-    proj_1: {
-      id: "proj_1",
-      name: "Customer support transcripts",
-      module: "LANGUAGE_VOICE",
-      batchId: "batch_1",
-      batchStatus: "COMPLETE",
-      fileCount: 320,
-      processedCount: 320,
-    },
-    proj_2: {
-      id: "proj_2",
-      name: "Invoice OCR dataset",
-      module: "BUSINESS_DATA",
-      batchId: "batch_2",
-      batchStatus: "PROCESSING",
-      fileCount: 85,
-      processedCount: 42,
-    },
-    proj_3: {
-      id: "proj_3",
-      name: "Product image catalogue",
-      module: "GENERAL",
-      batchId: "batch_3",
-      batchStatus: "REVIEW",
-      fileCount: 1420,
-      processedCount: 1420,
-    },
-  };
-  return projects[id] ?? null;
-}
-
-function statusToBadge(
-  s: BatchStatus
-): "processing" | "ready" | "flagged" | "failed" | "pending" {
-  const map: Record<BatchStatus, "processing" | "ready" | "flagged" | "failed" | "pending"> = {
-    PENDING: "pending",
-    PROCESSING: "processing",
-    REVIEW: "flagged",
-    COMPLETE: "ready",
-    FAILED: "failed",
-  };
-  return map[s];
-}
 
 export default async function ProjectPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const project = await getProject(params.id);
+  const session = await getServerSession();
+  const project = await getProjectDetail(session!.user.id, params.id);
   if (!project) notFound();
 
   const progress =
@@ -88,7 +35,6 @@ export default async function ProjectPage({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <Link
           href="/projects"
@@ -103,13 +49,9 @@ export default async function ProjectPage({
               {project.name}
             </h1>
             <div className="mt-1 flex items-center gap-2">
-              <Badge variant={statusToBadge(project.batchStatus)} />
+              <Badge variant={batchStatusToBadge(project.batchStatus)} />
               <span className="text-xs text-gray-400">
-                {project.module === "LANGUAGE_VOICE"
-                  ? "Language & voice"
-                  : project.module === "BUSINESS_DATA"
-                  ? "Business data"
-                  : "General"}
+                {moduleLabel(project.module)}
               </span>
             </div>
           </div>
@@ -130,9 +72,7 @@ export default async function ProjectPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upload + progress — left 2 cols */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Progress */}
           {project.batchStatus === "PROCESSING" && (
             <div className="bg-white border border-gray-100 rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
@@ -156,7 +96,6 @@ export default async function ProjectPage({
             </div>
           )}
 
-          {/* Upload zone */}
           <div className="bg-white border border-gray-100 rounded-xl p-5">
             <h2 className="text-sm font-semibold text-gray-900 mb-4">
               Add files
@@ -167,86 +106,59 @@ export default async function ProjectPage({
             />
           </div>
 
-          {/* File list placeholder */}
           <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="text-sm font-semibold text-gray-900">Files</h2>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                    Name
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                    Type
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                    Score
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {[
-                  {
-                    name: "call_001.mp3",
-                    type: "audio/mpeg",
-                    status: "done" as const,
-                    score: 0.94,
-                  },
-                  {
-                    name: "call_002.wav",
-                    type: "audio/wav",
-                    status: "done" as const,
-                    score: 0.87,
-                  },
-                  {
-                    name: "call_003.mp3",
-                    type: "audio/mpeg",
-                    status: "processing" as const,
-                    score: null,
-                  },
-                  {
-                    name: "call_004.wav",
-                    type: "audio/wav",
-                    status: "flagged" as const,
-                    score: 0.42,
-                  },
-                ].map((f, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-800">
-                      {f.name}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
-                      {f.type}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          f.status === "done"
-                            ? "ready"
-                            : f.status === "processing"
-                            ? "processing"
-                            : "flagged"
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">
-                      {f.score !== null
-                        ? `${(f.score * 100).toFixed(0)}%`
-                        : "—"}
-                    </td>
+            {project.files.length === 0 ? (
+              <div className="px-5 py-10 text-center text-sm text-gray-500">
+                No files uploaded yet.
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
+                      Name
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
+                      Type
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
+                      Status
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
+                      Score
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {project.files.map((f) => (
+                    <tr key={f.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        {f.name}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">
+                        {f.type}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={fileStatusToBadge(f.status, f.flagged)}
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">
+                        {f.score !== null
+                          ? `${(f.score * 100).toFixed(0)}%`
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
-        {/* Cleaning options — right col */}
         <div className="space-y-4">
           <div className="bg-white border border-gray-100 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -298,7 +210,9 @@ export default async function ProjectPage({
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500">Flagged</dt>
-                <dd className="font-medium text-amber-600">4</dd>
+                <dd className="font-medium text-amber-600">
+                  {project.flaggedCount}
+                </dd>
               </div>
             </dl>
           </div>

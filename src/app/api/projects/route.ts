@@ -1,11 +1,5 @@
 // =============================================================================
-// PROJECTS ROUTE — DB MODE only
-//
-// This route requires a live database. It is called by /projects/new (create)
-// and by pages that list real projects.
-//
-// While in TEMP MODE the "Create project" form will get a 500 — that is
-// expected. Real project management resumes once DB is connected.
+// PROJECTS ROUTE
 // =============================================================================
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
