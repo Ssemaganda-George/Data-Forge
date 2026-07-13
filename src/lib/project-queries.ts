@@ -1,44 +1,16 @@
 import { db } from "@/lib/db";
 import type { BatchStatus, FileStatus, ProjectModule } from "@prisma/client";
 import { format, formatDistanceToNow, startOfMonth, subMonths } from "date-fns";
+import {
+  type BadgeVariant,
+  batchStatusToBadge,
+  fileStatusToBadge,
+  moduleLabel,
+  parseCleaningActions,
+} from "@/lib/project-ui";
 
-export type BadgeVariant =
-  | "processing"
-  | "ready"
-  | "flagged"
-  | "failed"
-  | "pending";
-
-export function batchStatusToBadge(status: BatchStatus): BadgeVariant {
-  const map: Record<BatchStatus, BadgeVariant> = {
-    PENDING: "pending",
-    PROCESSING: "processing",
-    REVIEW: "flagged",
-    COMPLETE: "ready",
-    FAILED: "failed",
-  };
-  return map[status];
-}
-
-export function fileStatusToBadge(
-  status: FileStatus,
-  flagged?: boolean
-): BadgeVariant {
-  if (flagged) return "flagged";
-  const map: Record<FileStatus, BadgeVariant> = {
-    PENDING: "pending",
-    PROCESSING: "processing",
-    COMPLETE: "ready",
-    FAILED: "failed",
-  };
-  return map[status];
-}
-
-export function moduleLabel(module: ProjectModule | string): string {
-  if (module === "LANGUAGE_VOICE") return "Language & voice";
-  if (module === "BUSINESS_DATA") return "Business data";
-  return "General";
-}
+export type { BadgeVariant, CleaningActionSummary } from "@/lib/project-ui";
+export { batchStatusToBadge, fileStatusToBadge, moduleLabel, parseCleaningActions };
 
 export async function getDashboardStats(userId: string) {
   const where = { batch: { project: { userId } } };
@@ -141,9 +113,8 @@ export async function getProjectDetail(userId: string, projectId: string) {
       status: f.status,
       flagged: f.flaggedForReview,
       score: f.confidenceScore,
-      actions: Array.isArray(f.cleaningActions)
-        ? (f.cleaningActions as string[])
-        : [],
+      cleanedContent: f.cleanedContent ?? "",
+      actions: parseCleaningActions(f.cleaningActions),
     })),
   };
 }

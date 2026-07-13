@@ -9,7 +9,6 @@ import {
   moduleLabel,
 } from "@/lib/project-queries";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ProjectUploadPanel } from "@/components/project-upload-panel";
 import {
   IconArrowLeft,
@@ -18,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 
 export const metadata: Metadata = { title: "Project" };
+export const dynamic = "force-dynamic";
 
 export default async function ProjectPage({
   params,
@@ -64,11 +64,17 @@ export default async function ProjectPage({
           <div className="flex items-center gap-2">
             {canReview && (
               <>
-                <Link href={`/projects/${project.id}/review`}>
-                  <Button variant="secondary">Review files</Button>
+                <Link
+                  href={`/projects/${project.id}/review`}
+                  className="btn-secondary inline-flex items-center"
+                >
+                  Review files
                 </Link>
-                <Link href={`/projects/${project.id}/export`}>
-                  <Button variant="primary">Export dataset</Button>
+                <Link
+                  href={`/projects/${project.id}/export`}
+                  className="btn-primary inline-flex items-center"
+                >
+                  Export dataset
                 </Link>
               </>
             )}
