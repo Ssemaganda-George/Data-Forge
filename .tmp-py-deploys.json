@@ -1,0 +1,336 @@
+﻿[
+  {
+    "id": "79132710-a5ef-414b-a60e-d7f920807f5e",
+    "status": "FAILED",
+    "createdAt": "2026-07-13T10:53:54.529Z",
+    "meta": {
+      "branch": "main",
+      "buildOnly": false,
+      "commitAuthor": "Vaniahchristian",
+      "commitHash": "201f061f4df6873c196f1d803d055931c9e84cb6",
+      "commitMessage": "Wire dashboard pages to Prisma and add Railway deploy config.\n\nReplace placeholder UI data with real database queries, add GitHub OAuth routes, bump Next.js for security, and include Dockerfile/railway.toml for deployment.\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+      "configFile": "/railway.toml",
+      "fileServiceManifest": {
+        "build": {
+          "buildCommand": "npm run build"
+        },
+        "deploy": {
+          "healthcheckPath": "/login",
+          "healthcheckTimeout": 300,
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "startCommand": "npm start"
+        }
+      },
+      "logsV2": true,
+      "nixpacksProviders": [],
+      "plan": "hobby",
+      "propertyFileMapping": {
+        "build.buildCommand": "$.build.buildCommand",
+        "deploy.healthcheckPath": "$.deploy.healthcheckPath",
+        "deploy.healthcheckTimeout": "$.deploy.healthcheckTimeout",
+        "deploy.restartPolicyMaxRetries": "$.deploy.restartPolicyMaxRetries",
+        "deploy.restartPolicyType": "$.deploy.restartPolicyType",
+        "deploy.startCommand": "$.deploy.startCommand"
+      },
+      "reason": "deploy",
+      "repo": "Ssemaganda-George/Data-Forge",
+      "rootDirectory": "/python-service",
+      "runtime": "V2",
+      "serviceManifest": {
+        "build": {
+          "buildCommand": "npm run build",
+          "buildEnvironment": "V3",
+          "builder": "RAILPACK",
+          "dockerfilePath": null,
+          "nixpacksConfigPath": null,
+          "nixpacksPlan": null,
+          "watchPatterns": []
+        },
+        "deploy": {
+          "cronSchedule": null,
+          "drainingSeconds": null,
+          "healthcheckPath": "/login",
+          "healthcheckTimeout": 300,
+          "ipv6EgressEnabled": false,
+          "limitOverride": null,
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          },
+          "numReplicas": 1,
+          "overlapSeconds": null,
+          "preDeployCommand": null,
+          "region": null,
+          "registryCredentials": null,
+          "requiredMountPath": null,
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "runtime": "V2",
+          "sleepApplication": false,
+          "startCommand": "npm start",
+          "useLegacyStacker": false
+        }
+      },
+      "volumeMounts": []
+    }
+  },
+  {
+    "id": "07180fe6-c5a8-4cc3-ba32-c48aaa4a60a2",
+    "status": "FAILED",
+    "createdAt": "2026-07-13T08:39:10.856Z",
+    "meta": {
+      "branch": "main",
+      "buildOnly": false,
+      "commitAuthor": "Vaniahchristian",
+      "commitHash": "58143d529715557ac4689c5fb26de594c4b947ad",
+      "commitMessage": "Add full export integrations for GitHub, Colab, and batch export\n\nWire GitHub PAT connect and release push, scoped Colab notebooks, shared export hook, and a functional project export page with format selection and Kaggle/GitHub destinations.\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+      "fileServiceManifest": {},
+      "ignoreWatchPatterns": true,
+      "logsV2": true,
+      "nixpacksProviders": [],
+      "patchId": "f3863854-a31e-4e84-a634-ad9378b85129",
+      "plan": "hobby",
+      "propertyFileMapping": {},
+      "reason": "deploy",
+      "repo": "Ssemaganda-George/Data-Forge",
+      "rootDirectory": "/python-service",
+      "runtime": "V2",
+      "serviceManifest": {
+        "build": {
+          "buildCommand": null,
+          "buildEnvironment": "V3",
+          "builder": "RAILPACK",
+          "dockerfilePath": null,
+          "nixpacksConfigPath": null,
+          "nixpacksPlan": null,
+          "watchPatterns": []
+        },
+        "deploy": {
+          "cronSchedule": null,
+          "drainingSeconds": null,
+          "healthcheckPath": null,
+          "healthcheckTimeout": null,
+          "ipv6EgressEnabled": false,
+          "limitOverride": null,
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          },
+          "numReplicas": 1,
+          "overlapSeconds": null,
+          "preDeployCommand": null,
+          "region": null,
+          "registryCredentials": null,
+          "requiredMountPath": null,
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "runtime": "V2",
+          "sleepApplication": false,
+          "startCommand": null,
+          "useLegacyStacker": false
+        }
+      },
+      "volumeMounts": []
+    }
+  },
+  {
+    "id": "464c28fe-9d3d-4e1a-9a0b-29e215e3a32c",
+    "status": "SUCCESS",
+    "createdAt": "2026-07-12T21:16:21.174Z",
+    "meta": {
+      "buildOnly": false,
+      "cliAgentSessionId": "1d946e7d-828c-4cae-8634-64da4cb0d04c",
+      "cliCaller": "cursor",
+      "cliMessage": "Redeploy python service",
+      "configFile": "/railway.toml",
+      "fileServiceManifest": {
+        "build": {
+          "buildCommand": "npm run build"
+        },
+        "deploy": {
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "startCommand": "npm start"
+        }
+      },
+      "imageDigest": "sha256:3d02fabbd3828c029e91505f2a03545898d7adbdc77dc9523ce3ec874cd12591",
+      "logsV2": true,
+      "nixpacksProviders": [],
+      "propertyFileMapping": {
+        "build.buildCommand": "$.build.buildCommand",
+        "deploy.restartPolicyMaxRetries": "$.deploy.restartPolicyMaxRetries",
+        "deploy.restartPolicyType": "$.deploy.restartPolicyType",
+        "deploy.startCommand": "$.deploy.startCommand"
+      },
+      "reason": "deploy",
+      "rootDirectory": null,
+      "runtime": "V2",
+      "serviceManifest": {
+        "build": {
+          "buildCommand": "npm run build",
+          "buildEnvironment": "V3",
+          "builder": "RAILPACK",
+          "dockerfilePath": null,
+          "nixpacksConfigPath": null,
+          "nixpacksPlan": null,
+          "watchPatterns": []
+        },
+        "deploy": {
+          "cronSchedule": null,
+          "drainingSeconds": null,
+          "healthcheckPath": null,
+          "healthcheckTimeout": null,
+          "ipv6EgressEnabled": false,
+          "limitOverride": null,
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          },
+          "numReplicas": 1,
+          "overlapSeconds": null,
+          "preDeployCommand": null,
+          "region": null,
+          "registryCredentials": null,
+          "requiredMountPath": null,
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "runtime": "V2",
+          "sleepApplication": false,
+          "startCommand": "npm start",
+          "useLegacyStacker": false
+        }
+      },
+      "volumeMounts": []
+    }
+  },
+  {
+    "id": "59c65233-108e-41b4-9f52-86896c0ac51f",
+    "status": "FAILED",
+    "createdAt": "2026-07-12T19:00:13.788Z",
+    "meta": {
+      "buildOnly": false,
+      "cliAgentSessionId": "1d946e7d-828c-4cae-8634-64da4cb0d04c",
+      "cliCaller": "cursor",
+      "cliMessage": "Redeploy python service",
+      "configFile": "/railway.toml",
+      "fileServiceManifest": {
+        "build": {
+          "buildCommand": "npm run build"
+        },
+        "deploy": {
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "startCommand": "npm start"
+        }
+      },
+      "logsV2": true,
+      "nixpacksProviders": [],
+      "propertyFileMapping": {
+        "build.buildCommand": "$.build.buildCommand",
+        "deploy.restartPolicyMaxRetries": "$.deploy.restartPolicyMaxRetries",
+        "deploy.restartPolicyType": "$.deploy.restartPolicyType",
+        "deploy.startCommand": "$.deploy.startCommand"
+      },
+      "reason": "deploy",
+      "rootDirectory": null,
+      "runtime": "V2",
+      "serviceManifest": {
+        "build": {
+          "buildCommand": "npm run build",
+          "buildEnvironment": "V3",
+          "builder": "RAILPACK",
+          "dockerfilePath": null,
+          "nixpacksConfigPath": null,
+          "nixpacksPlan": null,
+          "watchPatterns": []
+        },
+        "deploy": {
+          "cronSchedule": null,
+          "drainingSeconds": null,
+          "healthcheckPath": null,
+          "healthcheckTimeout": null,
+          "ipv6EgressEnabled": false,
+          "limitOverride": null,
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          },
+          "numReplicas": 1,
+          "overlapSeconds": null,
+          "preDeployCommand": null,
+          "region": null,
+          "registryCredentials": null,
+          "requiredMountPath": null,
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "runtime": "V2",
+          "sleepApplication": false,
+          "startCommand": "npm start",
+          "useLegacyStacker": false
+        }
+      },
+      "volumeMounts": []
+    }
+  },
+  {
+    "id": "d769bf2c-8588-47c4-9888-e1c95dffa7c7",
+    "status": "REMOVED",
+    "createdAt": "2026-07-12T18:28:48.494Z",
+    "meta": {
+      "buildOnly": false,
+      "cliAgentSessionId": "1d946e7d-828c-4cae-8634-64da4cb0d04c",
+      "cliCaller": "cursor",
+      "cliMessage": "Deploy Data Forge Python processing service",
+      "fileServiceManifest": {},
+      "imageDigest": "sha256:870c7fe99419c760f647c2ba4132aaf62ff494c116f4677ea7adcd1ee9564bef",
+      "logsV2": true,
+      "nixpacksProviders": [],
+      "propertyFileMapping": {},
+      "reason": "deploy",
+      "rootDirectory": null,
+      "runtime": "V2",
+      "serviceManifest": {
+        "build": {
+          "buildCommand": null,
+          "buildEnvironment": "V3",
+          "builder": "RAILPACK",
+          "dockerfilePath": null,
+          "nixpacksConfigPath": null,
+          "nixpacksPlan": null,
+          "watchPatterns": []
+        },
+        "deploy": {
+          "cronSchedule": null,
+          "drainingSeconds": null,
+          "healthcheckPath": null,
+          "healthcheckTimeout": null,
+          "ipv6EgressEnabled": false,
+          "limitOverride": null,
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          },
+          "numReplicas": 1,
+          "overlapSeconds": null,
+          "preDeployCommand": null,
+          "region": null,
+          "registryCredentials": null,
+          "requiredMountPath": null,
+          "restartPolicyMaxRetries": 10,
+          "restartPolicyType": "ON_FAILURE",
+          "runtime": "V2",
+          "sleepApplication": false,
+          "startCommand": null,
+          "useLegacyStacker": false
+        }
+      },
+      "volumeMounts": []
+    }
+  }
+]
