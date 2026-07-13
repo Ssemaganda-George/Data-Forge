@@ -1,6 +1,10 @@
 import JSZip from "jszip";
 import { formatBytes } from "@/lib/utils";
 import { generateDataCard } from "@/lib/data-card";
+import {
+  formatVoiceDisplay,
+  parseVoiceCleanedContent,
+} from "@/lib/project-ui";
 
 export type ExportFormat = "CSV" | "JSON" | "PARQUET" | "COCO";
 
@@ -34,6 +38,17 @@ export function buildDatacardJson(files: ExportFileRow[], exportedBy: string) {
     totalFiles,
     avgConfidenceScore: Math.round(avgScore * 1000) / 1000,
     flaggedCount: files.filter((f) => f.flaggedForReview).length,
+    aiProviders: [
+      ...new Set(
+        files
+          .map((f) =>
+            f.cleanedContent
+              ? parseVoiceCleanedContent(f.cleanedContent)?.provider
+              : undefined
+          )
+          .filter((p): p is "sunbird" | "groq" => p === "sunbird" || p === "groq")
+      ),
+    ],
     fileTypes: files.reduce<Record<string, number>>((acc, f) => {
       acc[f.fileType] = (acc[f.fileType] ?? 0) + 1;
       return acc;
@@ -63,10 +78,15 @@ export function buildDatacardJson(files: ExportFileRow[], exportedBy: string) {
 export function buildCleanedDataText(files: ExportFileRow[]) {
   const separator = "─".repeat(72);
   return files
-    .map(
-      (f, i) =>
-        `${separator}\nFile ${i + 1} of ${files.length}: ${f.originalName}\nType: ${f.fileType} · Score: ${((f.confidenceScore ?? 0) * 100).toFixed(0)}%\n${separator}\n\n${f.cleanedContent ?? ""}\n`
-    )
+    .map((f, i) => {
+      const voice = f.cleanedContent
+        ? parseVoiceCleanedContent(f.cleanedContent)
+        : null;
+      const body = voice
+        ? formatVoiceDisplay(voice)
+        : (f.cleanedContent ?? "");
+      return `${separator}\nFile ${i + 1} of ${files.length}: ${f.originalName}\nType: ${f.fileType} · Score: ${((f.confidenceScore ?? 0) * 100).toFixed(0)}%\n${separator}\n\n${body}\n`;
+    })
     .join("\n");
 }
 

@@ -7,6 +7,33 @@
 
 const XLSX = require("xlsx") as typeof import("xlsx");
 
+import type { ProjectModule } from "@prisma/client";
+import {
+  isSunbirdConfigured,
+  sunbirdTranscribe,
+  sunbirdTranslate,
+} from "@/lib/providers/sunbird";
+
+export interface ProcessingOptions {
+  module?: ProjectModule;
+  language?: string;
+}
+
+function buildVoicePayload(
+  provider: "sunbird" | "groq",
+  sourceLanguage: string,
+  transcript: string,
+  translation?: string
+): string {
+  return JSON.stringify({
+    kind: "voice",
+    provider,
+    sourceLanguage,
+    transcript,
+    translation: translation && translation !== transcript ? translation : undefined,
+  });
+}
+
 
 export interface CleaningAction {
   type: string;
@@ -215,7 +242,8 @@ async function analyzeEmbeddedImages(
 
 export async function runProcessing(
   fileType: string,
-  buffer?: Buffer
+  buffer?: Buffer,
+  options?: ProcessingOptions
 ): Promise<{
   cleaningActions: CleaningAction[];
   confidenceScore: number;
@@ -515,6 +543,81 @@ export async function runProcessing(
 
   // ── Audio / Video ─────────────────────────────────────────────────────────
   if (fileType.startsWith("audio/") || fileType.startsWith("video/")) {
+    const language = options?.language ?? "eng";
+    const useSunbird =
+      options?.module === "LANGUAGE_VOICE" &&
+      isSunbirdConfigured() &&
+      buffer;
+
+    if (useSunbird) {
+      try {
+        const { transcription, language: detectedLang } = await sunbirdTranscribe(
+          buffer,
+          fileType,
+          language
+        );
+        const sourceLang = detectedLang || language;
+        const wordCount = transcription.split(/\s+/).filter(Boolean).length;
+
+        let translation: string | undefined;
+        if (sourceLang !== "eng" && transcription) {
+          try {
+            const translated = await sunbirdTranslate(
+              transcription,
+              sourceLang,
+              "eng"
+            );
+            translation = translated.translatedText;
+          } catch (err) {
+            console.error("[DataForge] Sunbird translate error:", err);
+          }
+        }
+
+        const cleaningActions: CleaningAction[] = [
+          {
+            type: "SUNBIRD_STT",
+            description: `Sunbird Whisper · ${wordCount.toLocaleString()} words · ${sourceLang}`,
+            appliedAt: now,
+          },
+        ];
+        if (translation) {
+          cleaningActions.push({
+            type: "SUNBIRD_TRANSLATE",
+            description: `${sourceLang} → English via Sunflower`,
+            appliedAt: now,
+          });
+        }
+
+        return {
+          cleaningActions,
+          confidenceScore: translation ? 0.93 : 0.9,
+          flaggedForReview: !transcription || wordCount < 3,
+          cleanedContent: buildVoicePayload(
+            "sunbird",
+            sourceLang,
+            transcription,
+            translation
+          ),
+        };
+      } catch (err) {
+        console.error("[DataForge] Sunbird STT error:", err);
+        if (!process.env.GROQ_API_KEY) {
+          return {
+            cleaningActions: [
+              {
+                type: "SUNBIRD_STT",
+                description: "Sunbird transcription failed",
+                appliedAt: now,
+              },
+            ],
+            confidenceScore: 0.5,
+            flaggedForReview: true,
+            cleanedContent: buildVoicePayload("sunbird", language, "", undefined),
+          };
+        }
+      }
+    }
+
     if (buffer && process.env.GROQ_API_KEY) {
       try {
         const ext = mimeToAudioExt(fileType);
@@ -553,6 +656,16 @@ export async function runProcessing(
         } else {
           cleanedContent = json.text.trim();
         }
+
+        const groqPayload = buildVoicePayload(
+          "groq",
+          lang,
+          json.text.trim(),
+          undefined
+        );
+        const content =
+          options?.module === "LANGUAGE_VOICE" ? groqPayload : cleanedContent;
+
         return {
           cleaningActions: [
             { type: "AUDIO_TRANSCRIPTION", description: `Whisper Large v3 · ${wordCount.toLocaleString()} words · ${duration}`, appliedAt: now },
@@ -560,7 +673,7 @@ export async function runProcessing(
           ],
           confidenceScore: 0.94,
           flaggedForReview: false,
-          cleanedContent,
+          cleanedContent: content,
         };
       } catch (err) {
         console.error("[DataForge] Groq Whisper error:", err);

@@ -5,6 +5,12 @@ import { useDropzone } from "react-dropzone";
 import { IconUpload, IconFile, IconX } from "@tabler/icons-react";
 import { cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import type { ProjectModule } from "@prisma/client";
+import {
+  DEFAULT_VOICE_LANGUAGE,
+  SUNBIRD_LANGUAGES,
+  type SunbirdLanguageCode,
+} from "@/lib/sunbird-languages";
 
 interface UploadedFile {
   file: File;
@@ -17,6 +23,7 @@ interface UploadedFile {
 interface UploadZoneProps {
   projectId: string;
   batchId: string;
+  module?: ProjectModule;
   onUploadComplete?: (fileIds: string[]) => void;
   className?: string;
 }
@@ -37,11 +44,16 @@ const ACCEPT = {
 export function UploadZone({
   projectId,
   batchId,
+  module,
   onUploadComplete,
   className,
 }: UploadZoneProps) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [language, setLanguage] = useState<SunbirdLanguageCode>(
+    DEFAULT_VOICE_LANGUAGE
+  );
+  const isVoiceProject = module === "LANGUAGE_VOICE";
 
   const onDrop = useCallback((accepted: File[]) => {
     const newFiles: UploadedFile[] = accepted.map((f) => ({
@@ -82,6 +94,9 @@ export function UploadZone({
         formData.append("file", uf.file);
         formData.append("projectId", projectId);
         formData.append("batchId", batchId);
+        if (isVoiceProject) {
+          formData.append("language", language);
+        }
 
         const res = await fetch("/api/upload", {
           method: "POST",
@@ -131,6 +146,34 @@ export function UploadZone({
 
   return (
     <div className={cn("space-y-4", className)}>
+      {isVoiceProject && (
+        <div className="rounded-lg border border-brand-100 bg-brand-50/50 px-4 py-3">
+          <label
+            htmlFor="voice-language"
+            className="block text-xs font-medium text-gray-700 mb-1.5"
+          >
+            Audio language
+          </label>
+          <select
+            id="voice-language"
+            value={language}
+            onChange={(e) =>
+              setLanguage(e.target.value as SunbirdLanguageCode)
+            }
+            className="w-full sm:w-auto text-sm rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+          >
+            {SUNBIRD_LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-gray-500">
+            Transcribed with Sunbird AI and translated to English for review.
+          </p>
+        </div>
+      )}
+
       <div
         {...getRootProps()}
         className={cn(
@@ -153,7 +196,9 @@ export function UploadZone({
           {isDragActive ? "Drop files here" : "Drag and drop files into this project"}
         </p>
         <p className="mt-1 text-xs text-gray-400">
-          PDFs, images, audio, spreadsheets, Word docs — up to 50 MB each
+          {isVoiceProject
+            ? "Audio and video — transcribed via Sunbird AI"
+            : "PDFs, images, audio, spreadsheets, Word docs — up to 50 MB each"}
         </p>
         <p className="mt-3 text-xs text-gray-400">or</p>
         <button

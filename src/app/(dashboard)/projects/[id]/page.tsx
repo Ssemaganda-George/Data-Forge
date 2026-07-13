@@ -118,6 +118,7 @@ export default async function ProjectPage({
             <ProjectUploadPanel
               projectId={project.id}
               batchId={project.batchId}
+              module={project.module}
             />
           </div>
 

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import type { ProjectModule } from "@prisma/client";
 
 const UploadZone = dynamic(
   () => import("@/components/upload-zone").then((m) => m.UploadZone),
@@ -16,11 +17,13 @@ const UploadZone = dynamic(
 interface ProjectUploadPanelProps {
   projectId: string;
   batchId: string;
+  module: ProjectModule;
 }
 
 export function ProjectUploadPanel({
   projectId,
   batchId,
+  module,
 }: ProjectUploadPanelProps) {
   const router = useRouter();
 
@@ -28,6 +31,7 @@ export function ProjectUploadPanel({
     <UploadZone
       projectId={projectId}
       batchId={batchId}
+      module={module}
       onUploadComplete={() => {
         router.refresh();
       }}

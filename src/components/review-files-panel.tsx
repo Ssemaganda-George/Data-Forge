@@ -3,7 +3,10 @@
 import { Fragment, useState } from "react";
 import Link from "next/link";
 import type { CleaningActionSummary } from "@/lib/project-ui";
-import { fileStatusToBadge } from "@/lib/project-ui";
+import {
+  fileStatusToBadge,
+  parseVoiceCleanedContent,
+} from "@/lib/project-ui";
 import type { FileStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -212,14 +215,58 @@ export function ReviewFilesPanel({ projectId, files }: ReviewFilesPanelProps) {
                       <tr key={`${f.id}-detail`} className="bg-gray-50/80">
                         <td colSpan={6} className="px-5 py-4 space-y-4">
                           {f.cleanedContent ? (
-                            <div>
-                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                Cleaned output
-                              </p>
-                              <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-white border border-gray-100 rounded-lg p-3 max-h-56 overflow-y-auto leading-relaxed">
-                                {f.cleanedContent}
-                              </pre>
-                            </div>
+                            (() => {
+                              const voice = parseVoiceCleanedContent(
+                                f.cleanedContent
+                              );
+                              if (voice) {
+                                return (
+                                  <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                      {voice.provider === "sunbird" && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100">
+                                          Powered by Sunbird AI
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-gray-400">
+                                        {voice.sourceLanguage.toUpperCase()}
+                                        {voice.provider === "sunbird"
+                                          ? " · Sunbird STT"
+                                          : " · Groq Whisper"}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                        Source transcript
+                                      </p>
+                                      <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-white border border-gray-100 rounded-lg p-3 max-h-48 overflow-y-auto leading-relaxed">
+                                        {voice.transcript || "—"}
+                                      </pre>
+                                    </div>
+                                    {voice.translation && (
+                                      <div>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                          English translation
+                                        </p>
+                                        <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-white border border-gray-100 rounded-lg p-3 max-h-48 overflow-y-auto leading-relaxed">
+                                          {voice.translation}
+                                        </pre>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                    Cleaned output
+                                  </p>
+                                  <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-white border border-gray-100 rounded-lg p-3 max-h-56 overflow-y-auto leading-relaxed">
+                                    {f.cleanedContent}
+                                  </pre>
+                                </div>
+                              );
+                            })()
                           ) : (
                             <p className="text-xs text-gray-500">
                               No cleaned content available for this file.

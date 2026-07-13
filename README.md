@@ -284,6 +284,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `STORAGE_SECRET_KEY` | DB mode | S3/MinIO secret key |
 | `STORAGE_BUCKET` | DB mode | Bucket name |
 | `STORAGE_REGION` | DB mode | AWS region or `us-east-1` for MinIO |
+| `GROQ_API_KEY` | Optional | Groq API key for OCR, spreadsheet analysis, and fallback Whisper transcription |
+| `SUNBIRD_API_KEY` | Voice projects | Sunbird AI token for African-language STT and translation ([docs](https://docs.sunbird.ai)) |
 
 ---
 

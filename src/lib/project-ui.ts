@@ -43,6 +43,35 @@ export function moduleLabel(module: string): string {
   return "General";
 }
 
+export type VoiceCleanedPayload = {
+  kind: "voice";
+  provider: "sunbird" | "groq";
+  sourceLanguage: string;
+  transcript: string;
+  translation?: string;
+};
+
+export function parseVoiceCleanedContent(raw: string): VoiceCleanedPayload | null {
+  if (!raw.trim().startsWith("{")) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<VoiceCleanedPayload>;
+    if (parsed.kind === "voice" && typeof parsed.transcript === "string") {
+      return parsed as VoiceCleanedPayload;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function formatVoiceDisplay(payload: VoiceCleanedPayload): string {
+  const lang = payload.sourceLanguage.toUpperCase();
+  if (payload.translation && payload.translation !== payload.transcript) {
+    return `── Source (${lang}) ──\n${payload.transcript}\n\n── English ──\n${payload.translation}`;
+  }
+  return payload.transcript;
+}
+
 export function parseCleaningActions(raw: unknown): CleaningActionSummary[] {
   if (!Array.isArray(raw)) return [];
 

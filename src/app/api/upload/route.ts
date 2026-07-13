@@ -49,6 +49,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    const project = await db.project.findFirst({
+      where: { id: projectId, userId: session.user.id },
+      select: { module: true },
+    });
+
+    const language = (formData.get("language") as string | null)?.trim() || undefined;
+
     await db.uploadBatch.update({
       where: { id: batch.id },
       data: { status: "PROCESSING" },
@@ -70,7 +77,10 @@ export async function POST(req: NextRequest) {
 
     let result;
     try {
-      result = await runProcessing(fileType, buffer);
+      result = await runProcessing(fileType, buffer, {
+        module: project?.module,
+        language,
+      });
 
       await db.fileRecord.update({
         where: { id: fileRecord.id },
