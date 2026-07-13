@@ -8,3 +8,8 @@ dist/
 prisma/dev.db
 uploads/
 .env*.example
+tsconfig.tsbuildinfo
+railway-*.json
+railway-*.txt
+deploy-log.json
+.railway-config-pull-*/
