@@ -93,17 +93,26 @@ export function ExportPageClient({
           <IconArrowLeft size={14} />
           Back to review
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">Export dataset</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
-          Choose a format and download your cleaned, model-ready dataset ({fileCount} file
-          {fileCount === 1 ? "" : "s"}).
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Export dataset
+            </h1>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Choose a format and download your cleaned, model-ready dataset (
+              {fileCount} file{fileCount === 1 ? "" : "s"}).
+            </p>
+          </div>
+          <ExportActions batchId={batchId} format={format} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-6">
           <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">Select format</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">
+              Select format
+            </h2>
             <div className="space-y-2">
               {FORMATS.map((f) => (
                 <label
@@ -126,8 +135,6 @@ export function ExportPageClient({
               ))}
             </div>
           </div>
-
-          <ExportActions batchId={batchId} format={format} />
         </div>
 
         <div className="lg:col-span-2">
