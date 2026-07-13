@@ -11,14 +11,28 @@ interface UploadedFile {
   id: string;
   progress: number;
   status: "queued" | "uploading" | "done" | "error";
+  errorMsg?: string;
 }
 
 interface UploadZoneProps {
-  projectId?: string;
-  batchId?: string;
+  projectId: string;
+  batchId: string;
   onUploadComplete?: (fileIds: string[]) => void;
   className?: string;
 }
+
+const ACCEPT = {
+  "image/*": [],
+  "application/pdf": [],
+  "audio/*": [],
+  "video/*": [],
+  "text/csv": [],
+  "text/plain": [],
+  "application/vnd.ms-excel": [],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [],
+  "application/msword": [],
+};
 
 export function UploadZone({
   projectId,
@@ -41,15 +55,7 @@ export function UploadZone({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "image/*": [],
-      "application/pdf": [],
-      "audio/*": [],
-      "video/*": [],
-      "text/csv": [],
-      "application/vnd.ms-excel": [],
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
-    },
+    accept: ACCEPT,
     multiple: true,
   });
 
@@ -58,51 +64,70 @@ export function UploadZone({
   }
 
   async function startUpload() {
-    if (files.length === 0 || uploading) return;
+    const queued = files.filter((f) => f.status === "queued");
+    if (queued.length === 0 || uploading) return;
+
     setUploading(true);
     const completedIds: string[] = [];
 
-    for (const uf of files) {
+    for (const uf of queued) {
       setFiles((prev) =>
         prev.map((f) =>
-          f.id === uf.id ? { ...f, status: "uploading", progress: 10 } : f
+          f.id === uf.id ? { ...f, status: "uploading", progress: 20 } : f
         )
       );
 
       try {
         const formData = new FormData();
         formData.append("file", uf.file);
-        if (projectId) formData.append("projectId", projectId);
-        if (batchId) formData.append("batchId", batchId);
+        formData.append("projectId", projectId);
+        formData.append("batchId", batchId);
 
         const res = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
 
-        if (!res.ok) throw new Error("Upload failed");
-        const data = (await res.json()) as { fileRecordId: string };
+        const data = (await res.json()) as {
+          fileRecordId?: string;
+          error?: string;
+        };
+
+        if (!res.ok) {
+          throw new Error(data.error ?? "Upload failed");
+        }
 
         setFiles((prev) =>
           prev.map((f) =>
             f.id === uf.id ? { ...f, status: "done", progress: 100 } : f
           )
         );
-        completedIds.push(data.fileRecordId);
-      } catch {
+        if (data.fileRecordId) completedIds.push(data.fileRecordId);
+      } catch (err) {
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === uf.id ? { ...f, status: "error" } : f
+            f.id === uf.id
+              ? {
+                  ...f,
+                  status: "error",
+                  errorMsg:
+                    err instanceof Error ? err.message : "Upload failed",
+                }
+              : f
           )
         );
       }
     }
 
     setUploading(false);
+
     if (completedIds.length > 0) {
       onUploadComplete?.(completedIds);
+      setFiles([]);
     }
   }
+
+  const queuedCount = files.filter((f) => f.status === "queued").length;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -125,10 +150,10 @@ export function UploadZone({
           stroke={1.5}
         />
         <p className="text-sm font-medium text-gray-700">
-          {isDragActive ? "Drop files here" : "Drag and drop files here"}
+          {isDragActive ? "Drop files here" : "Drag and drop files into this project"}
         </p>
         <p className="mt-1 text-xs text-gray-400">
-          Supports images, PDFs, audio, spreadsheets — up to 500 MB each
+          PDFs, images, audio, spreadsheets, Word docs — up to 50 MB each
         </p>
         <p className="mt-3 text-xs text-gray-400">or</p>
         <button
@@ -153,16 +178,13 @@ export function UploadZone({
                 </p>
                 <p className="text-xs text-gray-400">
                   {formatBytes(uf.file.size)}
-                  {uf.status === "uploading" && ` · ${uf.progress}%`}
-                  {uf.status === "done" && " · Uploaded"}
-                  {uf.status === "error" && " · Upload failed"}
+                  {uf.status === "uploading" && " · Processing…"}
+                  {uf.status === "done" && " · Done"}
+                  {uf.status === "error" && ` · ${uf.errorMsg ?? "Failed"}`}
                 </p>
                 {uf.status === "uploading" && (
                   <div className="mt-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-brand-500 rounded-full transition-all"
-                      style={{ width: `${uf.progress}%` }}
-                    />
+                    <div className="h-full w-2/3 bg-brand-500 rounded-full animate-pulse" />
                   </div>
                 )}
               </div>
@@ -175,25 +197,22 @@ export function UploadZone({
                   <IconX size={16} />
                 </button>
               )}
-              {uf.status === "done" && (
-                <span className="text-xs font-medium text-green-600">Done</span>
-              )}
-              {uf.status === "error" && (
-                <span className="text-xs font-medium text-red-600">Error</span>
-              )}
             </div>
           ))}
 
-          <div className="flex justify-end pt-1">
-            <Button
-              variant="primary"
-              onClick={startUpload}
-              loading={uploading}
-              disabled={files.every((f) => f.status === "done")}
-            >
-              {uploading ? "Uploading…" : `Upload ${files.filter((f) => f.status === "queued").length} file(s)`}
-            </Button>
-          </div>
+          {queuedCount > 0 && (
+            <div className="flex justify-end pt-1">
+              <Button
+                variant="primary"
+                onClick={startUpload}
+                loading={uploading}
+              >
+                {uploading
+                  ? "Processing…"
+                  : `Upload ${queuedCount} file${queuedCount === 1 ? "" : "s"}`}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

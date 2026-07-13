@@ -1,11 +1,8 @@
-// =============================================================================
-// UPLOAD ROUTE — DB MODE
-// =============================================================================
-
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { runProcessing } from "@/lib/memory-store";
+import { resolveUploadBatch, syncBatchStatus } from "@/lib/project-queries";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -21,66 +18,96 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const projectId = formData.get("projectId") as string | null;
+    const batchId = formData.get("batchId") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    if (!projectId) {
+      return NextResponse.json(
+        { error: "Uploads must be made inside a project." },
+        { status: 400 }
+      );
+    }
+
     if (file.size > MAX_BYTES) {
       return NextResponse.json(
-        { error: `File exceeds 50 MB dev limit` },
+        { error: "File exceeds 50 MB limit" },
         { status: 413 }
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const batch = await resolveUploadBatch(
+      session.user.id,
+      projectId,
+      batchId
+    );
 
-    // Get or create a default project for this user
-    let project = await db.project.findFirst({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
-
-    if (!project) {
-      project = await db.project.create({
-        data: {
-          userId: session.user.id,
-          name: "Default Project",
-          module: "GENERAL",
-        },
-        select: { id: true },
-      });
+    if (!batch) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const batch = await db.uploadBatch.create({
+    await db.uploadBatch.update({
+      where: { id: batch.id },
+      data: { status: "PROCESSING" },
+    });
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const fileType = file.type || "application/octet-stream";
+
+    const fileRecord = await db.fileRecord.create({
       data: {
-        projectId: project.id,
+        batchId: batch.id,
+        originalName: file.name,
+        fileType,
+        storageUrl: "",
         status: "PROCESSING",
+        sizeBytes: file.size,
       },
     });
 
-    // Run processing
-    const result = await runProcessing(file.type || "application/octet-stream", buffer);
+    let result;
+    try {
+      result = await runProcessing(fileType, buffer);
 
-  const fileRecord = await db.fileRecord.create({
-    data: {
-      batchId: batch.id,
-      originalName: file.name,
-      fileType: file.type || "application/octet-stream",
-      storageUrl: "",
-      status: "COMPLETE",
-      cleaningActions: result.cleaningActions as any,
-      confidenceScore: result.confidenceScore,
-      flaggedForReview: result.flaggedForReview,
-      processedAt: new Date(),
-      sizeBytes: file.size,
-      cleanedContent: result.cleanedContent,
-    },
-  });
+      await db.fileRecord.update({
+        where: { id: fileRecord.id },
+        data: {
+          status: "COMPLETE",
+          cleaningActions: result.cleaningActions as object,
+          confidenceScore: result.confidenceScore,
+          flaggedForReview: result.flaggedForReview,
+          processedAt: new Date(),
+          cleanedContent: result.cleanedContent,
+        },
+      });
+    } catch (processingError) {
+      await db.fileRecord.update({
+        where: { id: fileRecord.id },
+        data: { status: "FAILED" },
+      });
+      throw processingError;
+    }
+
+    await syncBatchStatus(batch.id);
+    await db.project.update({
+      where: { id: projectId },
+      data: { updatedAt: new Date() },
+    });
+
+    const updatedBatch = await db.uploadBatch.findUnique({
+      where: { id: batch.id },
+      select: { status: true },
+    });
 
     return NextResponse.json(
       {
         fileRecordId: fileRecord.id,
+        projectId,
+        batchId: batch.id,
+        batchStatus: updatedBatch?.status ?? "PROCESSING",
         status: "complete",
         cleaningActions: result.cleaningActions,
         confidenceScore: result.confidenceScore,
@@ -96,4 +123,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -10,7 +10,6 @@ import {
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { WorkspaceSection } from "@/components/workspace-section";
 import {
   IconFiles,
   IconDatabase,
@@ -88,9 +87,34 @@ export default async function DashboardPage() {
 
       <section>
         <h2 className="text-sm font-semibold text-gray-900 mb-3">
-          Clean files
+          Get started
         </h2>
-        <WorkspaceSection />
+        <div className="bg-white border border-gray-100 rounded-xl p-6">
+          <p className="text-sm text-gray-600">
+            Upload and process files inside a project. Each project runs its own
+            cleaning pipeline — review results and export when ready.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link href="/projects/new">
+              <Button variant="primary">
+                <IconPlus size={16} />
+                Create project
+              </Button>
+            </Link>
+            {recentProjects[0] ? (
+              <Link href={`/projects/${recentProjects[0].id}`}>
+                <Button variant="secondary">
+                  Open {recentProjects[0].name}
+                  <IconArrowRight size={14} />
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/projects">
+                <Button variant="secondary">View projects</Button>
+              </Link>
+            )}
+          </div>
+        </div>
       </section>
 
       <section>

@@ -148,6 +148,72 @@ export async function getProjectDetail(userId: string, projectId: string) {
   };
 }
 
+export async function resolveUploadBatch(
+  userId: string,
+  projectId: string,
+  batchId?: string | null
+) {
+  const project = await db.project.findFirst({
+    where: { id: projectId, userId },
+    select: { id: true },
+  });
+  if (!project) return null;
+
+  if (batchId) {
+    const existing = await db.uploadBatch.findFirst({
+      where: { id: batchId, projectId },
+    });
+    if (existing) return existing;
+  }
+
+  const latest = await db.uploadBatch.findFirst({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+  });
+  if (latest) return latest;
+
+  return db.uploadBatch.create({
+    data: { projectId, status: "PENDING" },
+  });
+}
+
+export async function syncBatchStatus(batchId: string) {
+  const files = await db.fileRecord.findMany({ where: { batchId } });
+
+  if (files.length === 0) {
+    return db.uploadBatch.update({
+      where: { id: batchId },
+      data: { status: "PENDING" },
+    });
+  }
+
+  if (files.some((f) => f.status === "PENDING" || f.status === "PROCESSING")) {
+    return db.uploadBatch.update({
+      where: { id: batchId },
+      data: { status: "PROCESSING" },
+    });
+  }
+
+  if (files.every((f) => f.status === "FAILED")) {
+    return db.uploadBatch.update({
+      where: { id: batchId },
+      data: { status: "FAILED" },
+    });
+  }
+
+  if (files.some((f) => f.flaggedForReview && f.status === "COMPLETE")) {
+    return db.uploadBatch.update({
+      where: { id: batchId },
+      data: { status: "REVIEW" },
+    });
+  }
+
+  return db.uploadBatch.update({
+    where: { id: batchId },
+    data: { status: "COMPLETE" },
+  });
+}
+
 export async function getDatasetsForUser(userId: string) {
   const exports = await db.datasetExport.findMany({
     where: { batch: { project: { userId } } },

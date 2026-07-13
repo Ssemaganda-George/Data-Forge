@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconArrowLeft, IconMicrophone, IconTable, IconLayoutGrid } from "@tabler/icons-react";
@@ -35,12 +35,24 @@ const MODULES = [
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [module, setModule] = useState<"LANGUAGE_VOICE" | "BUSINESS_DATA" | "GENERAL">(
     "GENERAL"
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("module");
+    if (
+      fromUrl === "LANGUAGE_VOICE" ||
+      fromUrl === "BUSINESS_DATA" ||
+      fromUrl === "GENERAL"
+    ) {
+      setModule(fromUrl);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

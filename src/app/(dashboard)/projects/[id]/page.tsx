@@ -10,7 +10,7 @@ import {
 } from "@/lib/project-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UploadZone } from "@/components/upload-zone";
+import { ProjectUploadPanel } from "@/components/project-upload-panel";
 import {
   IconArrowLeft,
   IconSettings,
@@ -32,6 +32,12 @@ export default async function ProjectPage({
     project.fileCount > 0
       ? Math.round((project.processedCount / project.fileCount) * 100)
       : 0;
+
+  const canReview =
+    project.fileCount > 0 &&
+    (project.batchStatus === "REVIEW" ||
+      project.batchStatus === "COMPLETE" ||
+      project.processedCount === project.fileCount);
 
   return (
     <div className="space-y-8">
@@ -56,8 +62,7 @@ export default async function ProjectPage({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {(project.batchStatus === "REVIEW" ||
-              project.batchStatus === "COMPLETE") && (
+            {canReview && (
               <>
                 <Link href={`/projects/${project.id}/review`}>
                   <Button variant="secondary">Review files</Button>
@@ -97,10 +102,14 @@ export default async function ProjectPage({
           )}
 
           <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">
               Add files
             </h2>
-            <UploadZone
+            <p className="text-xs text-gray-500 mb-4">
+              Drop documents here to run this project&apos;s cleaning pipeline.
+              Results appear in the file list below.
+            </p>
+            <ProjectUploadPanel
               projectId={project.id}
               batchId={project.batchId}
             />
@@ -112,7 +121,7 @@ export default async function ProjectPage({
             </div>
             {project.files.length === 0 ? (
               <div className="px-5 py-10 text-center text-sm text-gray-500">
-                No files uploaded yet.
+                No files yet. Upload documents above to start processing.
               </div>
             ) : (
               <table className="w-full text-sm">
