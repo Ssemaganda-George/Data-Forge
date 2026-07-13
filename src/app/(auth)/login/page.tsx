@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -34,6 +33,7 @@ export default function LoginPage() {
         setError(data.error || "Invalid email or password.");
       } else {
         router.push("/");
+        router.refresh();
       }
     } catch {
       setError("Something went wrong. Please try again.");

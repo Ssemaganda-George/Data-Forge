@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = { title: "Sign in" };
+export const dynamic = "force-dynamic";
 
 // Shared layout wrapping both login and signup
 export default async function AuthLayout({

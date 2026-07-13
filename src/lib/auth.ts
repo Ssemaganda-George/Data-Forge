@@ -1,14 +1,28 @@
-// =============================================================================
-// SUPABASE AUTH CONFIGURATION
-// =============================================================================
-
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createSupabaseClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { hashApiKey, looksLikeApiKey } from "@/lib/api-keys";
+import { getSiteUrl } from "@/lib/site-url";
 
-// Accepts either the browser session cookie or an `Authorization: Bearer dfk_...`
-// API key, so external callers (scripts, notebooks, MCP tools) can hit the same
-// routes as the dashboard.
+async function ensureAppUser(authUser: SupabaseUser) {
+  const email = authUser.email;
+  if (!email) return null;
+
+  const existing = await db.user.findUnique({ where: { id: authUser.id } });
+  if (existing) return existing;
+
+  return db.user.create({
+    data: {
+      id: authUser.id,
+      email,
+      name:
+        (authUser.user_metadata?.name as string | undefined) ||
+        email.split("@")[0],
+      image: (authUser.user_metadata?.avatar_url as string | undefined) || null,
+    },
+  });
+}
+
 export async function authenticateRequest(req: Request) {
   const authHeader = req.headers.get("authorization");
   const bearer = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
@@ -43,38 +57,27 @@ export async function getServerSession() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return null;
+    if (!user?.email) return null;
 
-    let appUser = await supabase
-      .from("User")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    const appUser = await db.user.findUnique({ where: { id: user.id } });
+    if (!appUser) {
+      const created = await ensureAppUser(user);
+      if (!created) return null;
 
-    if (!appUser.data) {
-      const { data: newUser, error: insertError } = await supabase
-        .from("User")
-        .insert({
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.name || user.email?.split("@")[0],
-          image: user.user_metadata?.avatar_url || null,
-        })
-        .select()
-        .single();
-
-      if (insertError || !newUser) {
-        console.error("[AUTH] Failed to create app user:", insertError);
-        return null;
-      }
-      appUser = { data: newUser } as any;
+      return {
+        user: {
+          id: created.id,
+          email: created.email,
+          name: created.name,
+        },
+      };
     }
 
     return {
       user: {
-        id: appUser.data.id,
-        email: appUser.data.email,
-        name: appUser.data.name,
+        id: appUser.id,
+        email: appUser.email,
+        name: appUser.name,
       },
     };
   } catch (error) {
@@ -96,10 +99,56 @@ export async function signInWithPassword(email: string, password: string) {
       return { error: error.message };
     }
 
+    if (!data.user) {
+      return { error: "Authentication failed" };
+    }
+
+    await ensureAppUser(data.user);
     return { user: data.user };
   } catch (error) {
     console.error("[AUTH] signIn unexpected error:", error);
     return { error: "Authentication failed" };
+  }
+}
+
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+  name?: string
+) {
+  try {
+    const supabase = createSupabaseClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: name ? { name } : undefined,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      console.error("[AUTH] signUp error:", error.message);
+      return { error: error.message };
+    }
+
+    if (!data.user) {
+      return { error: "Sign up failed" };
+    }
+
+    if (data.user.identities?.length === 0) {
+      return { error: "An account with this email already exists. Sign in instead." };
+    }
+
+    if (data.session) {
+      await ensureAppUser(data.user);
+      return { user: data.user };
+    }
+
+    return { needsEmailConfirmation: true };
+  } catch (error) {
+    console.error("[AUTH] signUp unexpected error:", error);
+    return { error: "Sign up failed" };
   }
 }
 
@@ -109,7 +158,7 @@ export async function signInWithMagicLink(email: string) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXTAUTH_URL}/auth/callback`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
       },
     });
 
@@ -133,4 +182,3 @@ export async function signOut() {
     console.error("[AUTH] signOut error:", error);
   }
 }
-

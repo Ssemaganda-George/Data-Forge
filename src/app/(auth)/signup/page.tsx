@@ -8,31 +8,59 @@ import { Input } from "@/components/ui/input";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleEmailSignUp(e: React.FormEvent) {
+  async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+
     if (!email.trim()) {
       setError("Email is required.");
       return;
     }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
-    setError("");
     try {
-      const res = await fetch("/api/auth/magic-link", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          password,
+          name: name.trim() || undefined,
+        }),
       });
       const data = await res.json();
+
       if (!res.ok) {
         setError(data.error || "Something went wrong. Please try again.");
-      } else {
-        setSent(true);
+        return;
       }
+
+      if (data.needsEmailConfirmation) {
+        setNeedsEmailConfirmation(true);
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -40,20 +68,20 @@ export default function SignUpPage() {
     }
   }
 
-  if (sent) {
+  if (needsEmailConfirmation) {
     return (
       <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
         <p className="text-sm font-medium text-gray-900 mb-1">Check your email</p>
         <p className="text-sm text-gray-500">
-          We sent a magic link to <strong>{email}</strong>. Click it to activate
-          your account.
+          We sent a confirmation link to <strong>{email}</strong>. Click it to
+          activate your account, then sign in.
         </p>
-        <button
-          onClick={() => setSent(false)}
-          className="mt-4 text-xs text-brand-600 hover:underline"
+        <Link
+          href="/login"
+          className="mt-4 inline-block text-xs text-brand-600 hover:underline"
         >
-          Back to sign up
-        </button>
+          Go to sign in
+        </Link>
       </div>
     );
   }
@@ -64,7 +92,18 @@ export default function SignUpPage() {
         Create your account
       </h2>
 
-      <form onSubmit={handleEmailSignUp} className="space-y-4">
+      <form onSubmit={handleSignUp} className="space-y-4">
+        <Input
+          label="Name"
+          type="text"
+          placeholder="Your name"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError("");
+          }}
+          autoComplete="name"
+        />
         <Input
           label="Email address"
           type="email"
@@ -74,8 +113,33 @@ export default function SignUpPage() {
             setEmail(e.target.value);
             setError("");
           }}
-          error={error}
           autoComplete="email"
+        />
+        <Input
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          placeholder="At least 8 characters"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError("");
+          }}
+          autoComplete="new-password"
+          showPasswordToggle
+          passwordVisible={showPassword}
+          onTogglePassword={() => setShowPassword(!showPassword)}
+        />
+        <Input
+          label="Confirm password"
+          type={showPassword ? "text" : "password"}
+          placeholder="Repeat your password"
+          value={confirmPassword}
+          onChange={(e) => {
+            setConfirmPassword(e.target.value);
+            setError("");
+          }}
+          autoComplete="new-password"
+          error={error}
         />
         <Button
           type="submit"
@@ -92,12 +156,6 @@ export default function SignUpPage() {
         <Link href="/login" className="text-brand-600 hover:underline">
           Sign in
         </Link>
-      </p>
-
-      <p className="mt-4 text-center text-xs text-gray-300">
-        By creating an account you agree to our{" "}
-        <span className="underline cursor-pointer">Terms of Service</span> and{" "}
-        <span className="underline cursor-pointer">Privacy Policy</span>.
       </p>
     </div>
   );
