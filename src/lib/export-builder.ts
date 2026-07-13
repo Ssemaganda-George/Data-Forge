@@ -38,8 +38,8 @@ export function buildDatacardJson(files: ExportFileRow[], exportedBy: string) {
     totalFiles,
     avgConfidenceScore: Math.round(avgScore * 1000) / 1000,
     flaggedCount: files.filter((f) => f.flaggedForReview).length,
-    aiProviders: [
-      ...new Set(
+    aiProviders: Array.from(
+      new Set(
         files
           .map((f) =>
             f.cleanedContent
@@ -47,8 +47,8 @@ export function buildDatacardJson(files: ExportFileRow[], exportedBy: string) {
               : undefined
           )
           .filter((p): p is "sunbird" | "groq" => p === "sunbird" || p === "groq")
-      ),
-    ],
+      )
+    ),
     fileTypes: files.reduce<Record<string, number>>((acc, f) => {
       acc[f.fileType] = (acc[f.fileType] ?? 0) + 1;
       return acc;
