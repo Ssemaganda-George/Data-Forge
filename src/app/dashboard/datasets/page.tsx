@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import { getDatasetsForUser } from "@/lib/project-queries";
 import { IconDatabase, IconDownload } from "@tabler/icons-react";
 import { formatBytes } from "@/lib/utils";
@@ -7,8 +7,8 @@ import { formatBytes } from "@/lib/utils";
 export const metadata: Metadata = { title: "Datasets" };
 
 export default async function DatasetsPage() {
-  const session = await getServerSession();
-  const datasets = await getDatasetsForUser(session!.user.id);
+  const session = await requireServerSession();
+  const datasets = await getDatasetsForUser(session.user.id);
 
   return (
     <div className="space-y-6">

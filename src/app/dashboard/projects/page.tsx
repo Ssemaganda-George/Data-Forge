@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import {
   batchStatusToBadge,
   getProjectsForUser,
@@ -13,8 +13,8 @@ import { IconPlus, IconSearch } from "@tabler/icons-react";
 export const metadata: Metadata = { title: "Projects" };
 
 export default async function ProjectsPage() {
-  const session = await getServerSession();
-  const projects = await getProjectsForUser(session!.user.id);
+  const session = await requireServerSession();
+  const projects = await getProjectsForUser(session.user.id);
 
   return (
     <div className="space-y-6">

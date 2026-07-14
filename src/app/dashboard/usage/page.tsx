@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import { getUsageForUser } from "@/lib/project-queries";
 import { formatNumber } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Usage" };
 
 export default async function UsagePage() {
-  const session = await getServerSession();
-  const usage = await getUsageForUser(session!.user.id);
+  const session = await requireServerSession();
+  const usage = await getUsageForUser(session.user.id);
 
   const maxGb = Math.max(...usage.months.map((m) => m.gb), 1);
 

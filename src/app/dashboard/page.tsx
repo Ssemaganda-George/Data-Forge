@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import {
   batchStatusToBadge,
   getDashboardStats,
@@ -26,9 +26,9 @@ import { formatBytes } from "@/lib/utils";
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const session = await getServerSession();
-  const firstName = session?.user.name?.split(" ")[0] ?? "there";
-  const userId = session!.user.id;
+  const session = await requireServerSession();
+  const firstName = session.user.name?.split(" ")[0] ?? "there";
+  const userId = session.user.id;
 
   const [stats, projects] = await Promise.all([
     getDashboardStats(userId),

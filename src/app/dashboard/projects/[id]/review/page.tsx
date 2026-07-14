@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import { getProjectDetail } from "@/lib/project-queries";
 import { ReviewFilesPanel } from "@/components/review-files-panel";
 import { IconArrowLeft } from "@tabler/icons-react";
@@ -14,8 +14,8 @@ export default async function ReviewPage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession();
-  const project = await getProjectDetail(session!.user.id, params.id);
+  const session = await requireServerSession();
+  const project = await getProjectDetail(session.user.id, params.id);
   if (!project) notFound();
 
   const flaggedCount = project.files.filter((f) => f.flagged).length;

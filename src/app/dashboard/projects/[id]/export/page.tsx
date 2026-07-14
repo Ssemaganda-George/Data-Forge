@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { buildBatchDataCard } from "@/lib/export-builder";
 import { ExportPageClient } from "@/components/export-page-client";
@@ -8,8 +8,7 @@ import { ExportPageClient } from "@/components/export-page-client";
 export const metadata: Metadata = { title: "Export dataset" };
 
 export default async function ExportPage({ params }: { params: { id: string } }) {
-  const session = await getServerSession();
-  if (!session) redirect("/login");
+  const session = await requireServerSession();
 
   const project = await db.project.findFirst({
     where: { id: params.id, userId: session.user.id },

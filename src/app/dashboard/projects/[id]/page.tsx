@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import {
   batchStatusToBadge,
   fileStatusToBadge,
@@ -24,8 +24,8 @@ export default async function ProjectPage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession();
-  const project = await getProjectDetail(session!.user.id, params.id);
+  const session = await requireServerSession();
+  const project = await getProjectDetail(session.user.id, params.id);
   if (!project) notFound();
 
   const progress =

@@ -1,5 +1,4 @@
-import { getServerSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requireServerSession } from "@/lib/auth";
 import { Sidebar } from "@/components/sidebar";
 
 export const dynamic = "force-dynamic";
@@ -9,8 +8,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession();
-  if (!session) redirect("/login");
+  const session = await requireServerSession();
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">

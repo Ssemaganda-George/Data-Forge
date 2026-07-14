@@ -1,8 +1,17 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { redirect } from "next/navigation";
 import { createSupabaseClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { hashApiKey, looksLikeApiKey } from "@/lib/api-keys";
 import { getSiteUrl } from "@/lib/site-url";
+
+export type AppSession = {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+};
 
 async function ensureAppUser(authUser: SupabaseUser) {
   const email = authUser.email;
@@ -50,7 +59,7 @@ export async function authenticateRequest(req: Request) {
   return getServerSession();
 }
 
-export async function getServerSession() {
+export async function getServerSession(): Promise<AppSession | null> {
   try {
     const supabase = createSupabaseClient();
     const {
@@ -84,6 +93,12 @@ export async function getServerSession() {
     console.error("[AUTH] getServerSession error:", error);
     return null;
   }
+}
+
+export async function requireServerSession(): Promise<AppSession> {
+  const session = await getServerSession();
+  if (!session) redirect("/login");
+  return session;
 }
 
 export async function signInWithPassword(email: string, password: string) {

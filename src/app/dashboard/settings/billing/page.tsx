@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getServerSession } from "@/lib/auth";
+import { requireServerSession } from "@/lib/auth";
 import { getUsageForUser } from "@/lib/project-queries";
 import { Button } from "@/components/ui/button";
 import { IconCheck } from "@tabler/icons-react";
@@ -47,8 +47,8 @@ const PLANS = [
 ];
 
 export default async function BillingPage() {
-  const session = await getServerSession();
-  const usage = await getUsageForUser(session!.user.id);
+  const session = await requireServerSession();
+  const usage = await getUsageForUser(session.user.id);
   const currentPlan = PLANS.find((p) => p.current)!;
 
   return (
