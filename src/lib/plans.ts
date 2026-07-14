@@ -1,0 +1,68 @@
+export const PLANS = [
+  {
+    id: "freemium",
+    name: "Freemium",
+    price: "$0",
+    period: "/ month",
+    quota: "500 MB / month",
+    description: "For individuals exploring clean data.",
+    features: [
+      "500MB processed per month",
+      "CSV & JSON export",
+      "Basic confidence scoring",
+      "Community support",
+    ],
+    cta: "Sign up free",
+    href: "/signup",
+  },
+  {
+    id: "starter",
+    name: "Starter",
+    price: "$10",
+    period: "/ month",
+    quota: "10 GB / month",
+    description: "For students and small projects.",
+    features: [
+      "Up to 1,000 files/month",
+      "CSV & JSON export",
+      "Email support",
+    ],
+    cta: "Start free trial",
+    href: "/signup",
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "$20",
+    period: "/ month",
+    quota: "100 GB / month",
+    description: "For startups and small teams shipping models.",
+    features: [
+      "Up to 50,000 files/month",
+      "All export formats",
+      "PII redaction",
+      "Priority support",
+    ],
+    cta: "Start free trial",
+    href: "/signup",
+    featured: true,
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    quota: "Unlimited",
+    description: "For institutions and large-scale deployments.",
+    features: [
+      "Unlimited files",
+      "Custom pipelines",
+      "SLA & dedicated support",
+      "SSO / SAML",
+    ],
+    cta: "Contact sales",
+    href: "/signup",
+  },
+];
+
+export const CURRENT_PLAN_ID = "pro";

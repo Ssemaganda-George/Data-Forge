@@ -70,15 +70,15 @@ export default function SignUpPage() {
 
   if (needsEmailConfirmation) {
     return (
-      <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
-        <p className="text-sm font-medium text-gray-900 mb-1">Check your email</p>
-        <p className="text-sm text-gray-500">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center">
+        <p className="text-sm font-medium text-[#0B2E2C] mb-1">Check your email</p>
+        <p className="text-sm text-[#4A6461]">
           We sent a confirmation link to <strong>{email}</strong>. Click it to
           activate your account, then sign in.
         </p>
         <Link
           href="/login"
-          className="mt-4 inline-block text-xs text-brand-600 hover:underline"
+          className="mt-4 inline-block text-xs text-[#028090] hover:underline"
         >
           Go to sign in
         </Link>
@@ -87,8 +87,8 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-8">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl p-8">
+      <h2 className="text-lg font-semibold text-[#0B2E2C] mb-6">
         Create your account
       </h2>
 
@@ -151,9 +151,9 @@ export default function SignUpPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-xs text-gray-400">
+      <p className="mt-6 text-center text-xs text-[#4A6461]">
         Already have an account?{" "}
-        <Link href="/login" className="text-brand-600 hover:underline">
+        <Link href="/login" className="text-[#028090] hover:underline">
           Sign in
         </Link>
       </p>

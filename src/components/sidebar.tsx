@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,23 +11,27 @@ import {
   IconSettings,
   IconKey,
   IconPlug,
-  IconBolt,
   IconLogout,
+  IconCreditCard,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/logo";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard },
   { href: "/dashboard/projects", label: "Projects", icon: IconFolders },
   { href: "/dashboard/datasets", label: "Datasets", icon: IconDatabase },
   { href: "/dashboard/usage", label: "Usage", icon: IconChartBar },
+  { href: "/dashboard/settings/profile", label: "Profile", icon: IconSettings },
   { href: "/dashboard/settings/api-keys", label: "API Keys", icon: IconKey },
   { href: "/dashboard/settings/integrations", label: "Integrations", icon: IconPlug },
-  { href: "/dashboard/settings/billing", label: "Settings", icon: IconSettings },
+  { href: "/dashboard/settings/billing", label: "Billing", icon: IconCreditCard },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [confirming, setConfirming] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   function isActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -34,8 +39,14 @@ export function Sidebar() {
   }
 
   async function handleSignOut() {
-    await fetch("/api/auth/signout", { method: "POST" });
-    window.location.href = "/login";
+    setSigningOut(true);
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+      window.location.href = "/login";
+    } catch {
+      setSigningOut(false);
+      setConfirming(false);
+    }
   }
 
   return (
@@ -43,9 +54,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
-            <IconBolt size={16} className="text-white" />
-          </div>
+          <Logo className="rounded-md" />
           <span className="text-sm font-semibold text-gray-900">YoDataSet</span>
         </div>
       </div>
@@ -69,13 +78,37 @@ export function Sidebar() {
 
       {/* Sign out */}
       <div className="px-3 pb-4 border-t border-gray-100 pt-3">
-        <button
-          onClick={() => handleSignOut()}
-          className="sidebar-link w-full"
-        >
-          <IconLogout size={17} stroke={1.8} />
-          Sign out
-        </button>
+        {confirming ? (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500 text-center">
+              Are you sure you want to sign out?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirming(false)}
+                disabled={signingOut}
+                className="flex-1 text-xs font-medium text-gray-700 border border-gray-200 rounded-md px-2 py-1.5 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="flex-1 text-xs font-medium text-white bg-[#028090] rounded-md px-2 py-1.5 hover:bg-[#026c78] transition-colors disabled:opacity-50"
+              >
+                {signingOut ? "Signing out..." : "Sign out"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirming(true)}
+            className="sidebar-link w-full"
+          >
+            <IconLogout size={17} stroke={1.8} />
+            Sign out
+          </button>
+        )}
       </div>
     </aside>
   );

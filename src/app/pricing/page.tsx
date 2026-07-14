@@ -1,60 +1,10 @@
 import Link from "next/link";
 import { Navbar } from "@/components/marketing/navbar";
+import { PLANS } from "@/lib/plans";
 
 export const metadata = {
   title: "Pricing · YoDataSet",
 };
-
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "For individuals exploring clean data.",
-    features: [
-      "500MB processed per month",
-      "CSV and JSON export",
-      "Basic confidence scoring",
-      "Community support",
-    ],
-    cta: "Sign up free",
-    href: "/signup",
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$29",
-    period: "per month",
-    description: "For startups and small teams shipping models.",
-    features: [
-      "20GB processed per month",
-      "CSV, JSON, Parquet, and COCO export",
-      "Auto-generated Data Cards",
-      "Priority processing queue",
-      "API access with keys",
-      "Email support",
-    ],
-    cta: "Start free trial",
-    href: "/signup",
-    featured: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "on request",
-    description: "For institutions and large-scale deployments.",
-    features: [
-      "Unlimited processing",
-      "Custom pipeline templates",
-      "Dedicated support and onboarding",
-      "SLA and private deployment",
-      "Advanced security and audit logs",
-    ],
-    cta: "Contact sales",
-    href: "/signup",
-    featured: false,
-  },
-];
 
 export default function PricingPage() {
   return (
@@ -75,10 +25,10 @@ export default function PricingPage() {
         </section>
 
         <section className="mx-auto max-w-6xl px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            {plans.map((plan) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+            {PLANS.map((plan) => (
               <div
-                key={plan.name}
+                key={plan.id}
                 className={`bg-white border rounded-xl p-6 ${
                   plan.featured
                     ? "border-[#028090] shadow-none"

@@ -71,14 +71,14 @@ export default function LoginPage() {
 
   if (magicSent) {
     return (
-      <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
-        <p className="text-sm font-medium text-gray-900 mb-1">Check your email</p>
-        <p className="text-sm text-gray-500">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center">
+        <p className="text-sm font-medium text-[#0B2E2C] mb-1">Check your email</p>
+        <p className="text-sm text-[#4A6461]">
           We sent a magic link to <strong>{email}</strong>. Click it to sign in.
         </p>
         <button
           onClick={() => setMagicSent(false)}
-          className="mt-4 text-xs text-brand-600 hover:underline"
+          className="mt-4 text-xs text-[#028090] hover:underline"
         >
           Back to login
         </button>
@@ -87,17 +87,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-8">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Sign in</h2>
+    <div className="bg-white border border-[#E5E7EB] rounded-xl p-8">
+      <h2 className="text-lg font-semibold text-[#0B2E2C] mb-6">Sign in</h2>
 
-      <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+      <div className="flex rounded-md bg-[#F7FAF9] border border-[#E5E7EB] p-1 mb-6">
         <button
           type="button"
           onClick={() => setMode("credentials")}
           className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
             mode === "credentials"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-white text-[#0B2E2C] border border-[#E5E7EB]"
+              : "text-[#4A6461] hover:text-[#0B2E2C]"
           }`}
         >
           Password
@@ -107,8 +107,8 @@ export default function LoginPage() {
           onClick={() => setMode("email")}
           className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
             mode === "email"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-white text-[#0B2E2C] border border-[#E5E7EB]"
+              : "text-[#4A6461] hover:text-[#0B2E2C]"
           }`}
         >
           Magic link
@@ -182,9 +182,9 @@ export default function LoginPage() {
         </form>
       )}
 
-      <p className="mt-6 text-center text-xs text-gray-400">
+      <p className="mt-6 text-center text-xs text-[#4A6461]">
         No account?{" "}
-        <Link href="/signup" className="text-brand-600 hover:underline">
+        <Link href="/signup" className="text-[#028090] hover:underline">
           Sign up free
         </Link>
       </p>

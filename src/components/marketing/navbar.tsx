@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Menu,
-  X,
-  ArrowRight,
-} from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const navLinks = [
   { href: "#product", label: "Product" },
@@ -22,20 +19,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 bg-[#F7FAF9] border-b border-[#E5E7EB]">
       <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-[#028090] rounded-md flex items-center justify-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-          </div>
+          <Logo className="rounded-md" />
           <span className="text-sm font-semibold text-[#0B2E2C]">YoDataSet</span>
         </Link>
 

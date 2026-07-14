@@ -10,6 +10,7 @@ import {
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Greeting } from "@/components/greeting";
 import {
   IconFiles,
   IconDatabase,
@@ -41,9 +42,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">
-            Good morning, {firstName}
-          </h1>
+          <Greeting firstName={firstName} />
           <p className="mt-0.5 text-sm text-gray-500">
             Here&apos;s what&apos;s happening across your datasets.
           </p>

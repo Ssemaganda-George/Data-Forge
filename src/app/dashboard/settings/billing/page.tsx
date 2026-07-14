@@ -1,55 +1,16 @@
 import type { Metadata } from "next";
 import { requireServerSession } from "@/lib/auth";
 import { getUsageForUser } from "@/lib/project-queries";
+import { PLANS, CURRENT_PLAN_ID } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { IconCheck } from "@tabler/icons-react";
 
 export const metadata: Metadata = { title: "Billing" };
 
-const PLANS = [
-  {
-    id: "starter",
-    name: "Starter",
-    price: "$0",
-    period: "/ month",
-    quota: "10 GB / month",
-    features: ["Up to 1,000 files/month", "CSV & JSON export", "Email support"],
-    current: false,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$49",
-    period: "/ month",
-    quota: "100 GB / month",
-    features: [
-      "Up to 50,000 files/month",
-      "All export formats",
-      "PII redaction",
-      "Priority support",
-    ],
-    current: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    quota: "Unlimited",
-    features: [
-      "Unlimited files",
-      "Custom pipelines",
-      "SLA & dedicated support",
-      "SSO / SAML",
-    ],
-    current: false,
-  },
-];
-
 export default async function BillingPage() {
   const session = await requireServerSession();
   const usage = await getUsageForUser(session.user.id);
-  const currentPlan = PLANS.find((p) => p.current)!;
+  const currentPlan = PLANS.find((p) => p.id === CURRENT_PLAN_ID)!;
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -93,17 +54,17 @@ export default async function BillingPage() {
 
       <section>
         <p className="text-sm font-semibold text-gray-900 mb-4">All plans</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {PLANS.map((plan) => (
             <div
               key={plan.id}
               className={`rounded-xl border p-5 ${
-                plan.current
+                plan.id === CURRENT_PLAN_ID
                   ? "border-brand-400 ring-1 ring-brand-400"
                   : "border-gray-100"
               }`}
             >
-              {plan.current && (
+              {plan.id === CURRENT_PLAN_ID && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-700 mb-3">
                   Current plan
                 </span>
@@ -132,11 +93,11 @@ export default async function BillingPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-5">
-                {plan.current ? (
-                  <p className="text-xs text-gray-400 text-center">
+              <div className="mt-5 min-h-[36px] flex items-center">
+                {plan.id === CURRENT_PLAN_ID ? (
+                  <span className="text-xs text-gray-400 text-center w-full">
                     Your current plan
-                  </p>
+                  </span>
                 ) : (
                   <Button
                     variant={
