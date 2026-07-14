@@ -39,7 +39,7 @@ function downloadInstructions(baseUrl: string, scope: ColabScope) {
 
   if (scope.fileId) {
     return {
-      description: "This notebook downloads **one cleaned file** from DataForge.",
+      description: "This notebook downloads **one cleaned file** from YoDataSet.",
       request: [
         "res = requests.post(",
         "    f'{BASE_URL}/api/download',",
@@ -48,13 +48,13 @@ function downloadInstructions(baseUrl: string, scope: ColabScope) {
         "    timeout=120,",
         ")",
       ].join("\n"),
-      filename: "dataforge-file-export.zip",
+      filename: "yodataset-file-export.zip",
     };
   }
 
   if (scope.batchId) {
     return {
-      description: "This notebook downloads **one project batch** from DataForge.",
+      description: "This notebook downloads **one project batch** from YoDataSet.",
       request: [
         "res = requests.post(",
         "    f'{BASE_URL}/api/export',",
@@ -63,7 +63,7 @@ function downloadInstructions(baseUrl: string, scope: ColabScope) {
         "    timeout=120,",
         ")",
       ].join("\n"),
-      filename: "dataforge-batch-export.zip",
+      filename: "yodataset-batch-export.zip",
     };
   }
 
@@ -77,7 +77,7 @@ function downloadInstructions(baseUrl: string, scope: ColabScope) {
       "    timeout=120,",
       ")",
     ].join("\n"),
-    filename: "dataforge-export.zip",
+    filename: "yodataset-export.zip",
   };
 }
 
@@ -88,10 +88,10 @@ export function buildColabNotebook(baseUrl: string, scope: ColabScope = {}) {
   nb.cells = [
     md(
       [
-        "# Import a DataForge cleaned dataset",
+        "# Import a YoDataSet cleaned dataset",
         "",
         instructions.description,
-        "Create an API key under **Settings → API Keys** in the DataForge dashboard.",
+        "Create an API key under **Settings → API Keys** in the YoDataSet dashboard.",
       ].join("\n")
     ),
     code(
@@ -101,7 +101,7 @@ export function buildColabNotebook(baseUrl: string, scope: ColabScope = {}) {
         "import requests",
         "",
         `BASE_URL = "${baseUrl}"`,
-        "API_KEY = getpass.getpass('DataForge API key (dfk_...): ')",
+        "API_KEY = getpass.getpass('YoDataSet API key (dfk_...): ')",
         "headers = {'Authorization': f'Bearer {API_KEY}'}",
       ].join("\n")
     ),
@@ -136,9 +136,9 @@ export function buildColabNotebook(baseUrl: string, scope: ColabScope = {}) {
         "    print('Add KAGGLE_USERNAME and KAGGLE_KEY in Colab secrets.')",
         "else:",
         "    !pip -q install kaggle",
-        "    !unzip -o dataforge*.zip -d dataforge_export",
-        "    !kaggle datasets init -p dataforge_export",
-        "    print('Edit dataset-metadata.json, then: kaggle datasets create -p dataforge_export')",
+        "    !unzip -o yodataset*.zip -d yodataset_export",
+        "    !kaggle datasets init -p yodataset_export",
+        "    print('Edit dataset-metadata.json, then: kaggle datasets create -p yodataset_export')",
       ].join("\n")
     ),
     md(["## Push to GitHub from Colab", "", "Upload the ZIP to a release with the GitHub CLI."].join("\n")),
@@ -146,7 +146,7 @@ export function buildColabNotebook(baseUrl: string, scope: ColabScope = {}) {
       [
         "# !pip -q install ghapi",
         "# Replace owner/repo and tag, then upload:",
-        `# !gh release create dataforge-export --repo owner/repo --title 'DataForge export' ${instructions.filename}`,
+        `# !gh release create yodataset-export --repo owner/repo --title 'YoDataSet export' ${instructions.filename}`,
       ].join("\n")
     ),
   ];

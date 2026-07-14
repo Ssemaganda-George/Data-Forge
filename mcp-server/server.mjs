@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-// MCP server exposing DataForge to any MCP client (Claude Desktop, Claude Code,
-// Cursor, etc.) as tools that call the DataForge REST API with an API key.
+// MCP server exposing YoDataSet to any MCP client (Claude Desktop, Claude Code,
+// Cursor, etc.) as tools that call the YoDataSet REST API with an API key.
 //
 // Config (env vars):
-//   DATAFORGE_API_KEY   required — created under Settings > API Keys
-//   DATAFORGE_BASE_URL  optional — defaults to the hosted MVP
+//   YODATASET_API_KEY   required — created under Settings > API Keys
+//   YODATASET_BASE_URL  optional — defaults to the hosted MVP
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-const BASE_URL = process.env.DATAFORGE_BASE_URL || "https://data-forge-jet.vercel.app";
-const API_KEY = process.env.DATAFORGE_API_KEY;
+const BASE_URL = process.env.YODATASET_BASE_URL || "https://data-forge-jet.vercel.app";
+const API_KEY = process.env.YODATASET_API_KEY;
 
 if (!API_KEY) {
-  console.error("DATAFORGE_API_KEY is required. Create one under Settings > API Keys.");
+  console.error("YODATASET_API_KEY is required. Create one under Settings > API Keys.");
   process.exit(1);
 }
 
@@ -28,16 +28,16 @@ async function api(path, options = {}) {
     },
   });
   if (!res.ok) {
-    throw new Error(`DataForge API ${res.status}: ${await res.text()}`);
+    throw new Error(`YoDataSet API ${res.status}: ${await res.text()}`);
   }
   return res;
 }
 
-const server = new McpServer({ name: "dataforge", version: "0.1.0" });
+const server = new McpServer({ name: "yodataset", version: "0.1.0" });
 
 server.tool(
   "list_projects",
-  "List the caller's DataForge projects, with each project's latest batch status.",
+  "List the caller's YoDataSet projects, with each project's latest batch status.",
   {},
   async () => {
     const projects = await (await api("/api/projects")).json();
@@ -47,7 +47,7 @@ server.tool(
 
 server.tool(
   "create_project",
-  "Create a new DataForge project to upload files into.",
+  "Create a new YoDataSet project to upload files into.",
   {
     name: z.string().describe("Project name"),
     module: z

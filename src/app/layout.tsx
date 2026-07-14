@@ -3,7 +3,7 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "DataForge", template: "%s · DataForge" },
+  title: { default: "YoDataSet", template: "%s · YoDataSet" },
   description: "Turn messy files into model-ready datasets.",
 };
 

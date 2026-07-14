@@ -185,7 +185,7 @@ export function WorkspaceSection() {
       // Derive filename from Content-Disposition or fall back
       const disposition = res.headers.get("Content-Disposition") ?? "";
       const match = disposition.match(/filename="?([^"]+)"?/);
-      const filename = match?.[1] ?? `dataforge-export-${Date.now()}.zip`;
+      const filename = match?.[1] ?? `yodataset-export-${Date.now()}.zip`;
 
       // Must be attached to the DOM for Firefox + Safari
       const a = document.createElement("a");

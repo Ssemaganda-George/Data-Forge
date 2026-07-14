@@ -64,12 +64,12 @@ export interface MemFile {
 // In production there is only one module instance, so this is a no-op there.
 declare global {
   // eslint-disable-next-line no-var
-  var __dataforgeMemStore: Map<string, Map<string, MemFile>> | undefined;
+  var __yodatasetMemStore: Map<string, Map<string, MemFile>> | undefined;
 }
 
 const _store: Map<string, Map<string, MemFile>> =
-  globalThis.__dataforgeMemStore ??
-  (globalThis.__dataforgeMemStore = new Map());
+  globalThis.__yodatasetMemStore ??
+  (globalThis.__yodatasetMemStore = new Map());
 
 export function getFiles(userId: string): MemFile[] {
   return Array.from(_store.get(userId)?.values() ?? []).sort(
@@ -231,7 +231,7 @@ async function analyzeEmbeddedImages(
       const json = (await res.json()) as GroqChatResponse;
       results.push(json.choices[0].message.content.trim());
     } catch (err) {
-      console.error("[DataForge] Groq embedded image error:", err);
+      console.error("[YoDataSet] Groq embedded image error:", err);
       results.push("[Image analysis failed]");
     }
   }
@@ -345,7 +345,7 @@ export async function runProcessing(
             appliedAt: now,
           });
         } catch (err) {
-          console.error("[DataForge] DOCX AI analysis error:", err);
+          console.error("[YoDataSet] DOCX AI analysis error:", err);
         }
       }
 
@@ -375,7 +375,7 @@ export async function runProcessing(
         cleanedContent: text + aiSection + imgSection,
       };
     } catch (err) {
-      console.error("[DataForge] DOCX parse error:", err);
+      console.error("[YoDataSet] DOCX parse error:", err);
       return {
         cleaningActions: [{ type: "TEXT_EXTRACTION", description: "Parse failed", appliedAt: now }],
         confidenceScore: 0.5,
@@ -461,7 +461,7 @@ export async function runProcessing(
             appliedAt: now,
           });
         } catch (err) {
-          console.error("[DataForge] PDF AI analysis error:", err);
+          console.error("[YoDataSet] PDF AI analysis error:", err);
           aiSection = "\n\n[AI analysis failed — see server logs]";
         }
       }
@@ -473,7 +473,7 @@ export async function runProcessing(
         cleanedContent: text.trim() + aiSection,
       };
     } catch (err) {
-      console.error("[DataForge] PDF parse error:", err);
+      console.error("[YoDataSet] PDF parse error:", err);
       return {
         cleaningActions: [
           { type: "TEXT_EXTRACTION", description: "Parse failed", appliedAt: now },
@@ -524,7 +524,7 @@ export async function runProcessing(
           cleanedContent: text,
         };
       } catch (err) {
-        console.error("[DataForge] Groq vision error:", err);
+        console.error("[YoDataSet] Groq vision error:", err);
       }
     }
     // Stub fallback (no API key or error)
@@ -569,7 +569,7 @@ export async function runProcessing(
             );
             translation = translated.translatedText;
           } catch (err) {
-            console.error("[DataForge] Sunbird translate error:", err);
+            console.error("[YoDataSet] Sunbird translate error:", err);
           }
         }
 
@@ -600,7 +600,7 @@ export async function runProcessing(
           ),
         };
       } catch (err) {
-        console.error("[DataForge] Sunbird STT error:", err);
+        console.error("[YoDataSet] Sunbird STT error:", err);
         if (!process.env.GROQ_API_KEY) {
           return {
             cleaningActions: [
@@ -676,7 +676,7 @@ export async function runProcessing(
           cleanedContent: content,
         };
       } catch (err) {
-        console.error("[DataForge] Groq Whisper error:", err);
+        console.error("[YoDataSet] Groq Whisper error:", err);
       }
     }
     // Stub fallback
@@ -813,7 +813,7 @@ export async function runProcessing(
               appliedAt: now,
             });
           } catch (err) {
-            console.error("[DataForge] Spreadsheet AI analysis error:", err);
+            console.error("[YoDataSet] Spreadsheet AI analysis error:", err);
             cleanedPayload.ai_insights = { error: "AI analysis failed — see server logs" };
           }
         }
@@ -825,7 +825,7 @@ export async function runProcessing(
           cleanedContent: JSON.stringify(cleanedPayload, null, 2),
         };
       } catch (err) {
-        console.error("[DataForge] spreadsheet parse error:", err);
+        console.error("[YoDataSet] spreadsheet parse error:", err);
       }
     }
 

@@ -1,7 +1,7 @@
 **==> picture [127 x 40] intentionally omitted <==**
 
 **----- Start of picture text -----**<br>
-DF DataForge<br>**----- End of picture text -----**<br>
+DF YoDataSet<br>**----- End of picture text -----**<br>
 
 
 ## **Garbage in. Clean, model-ready data out.** The self-serve platform that turns messy files into clean, structured, AI-ready datasets. 
@@ -76,7 +76,7 @@ Digital jobs AI is projected to help create across Sub-Saharan Africa by 2030
 
 African languages with little to no structured AI training data available today 
 
-_Every AI startup, research lab, and public institution on the continent needs this layer — DataForge sells the pick and shovel, not a single vertical bet._ 
+_Every AI startup, research lab, and public institution on the continent needs this layer — YoDataSet sells the pick and shovel, not a single vertical bet._ 
 
 4 
 
@@ -138,7 +138,7 @@ Every dataset cleaned on African infrastructure, by an African-built tool, is a 
 
 ## **Built by people who've lived the data problem** 
 
-**George Ssemaganda GS** Founder Computer scientist and part-time tour guide. Also founder of Dirt Trails, a tourism-operator SaaS platform live in East Africa — DataForge grew out of firsthand experience with messy, unusable field data. 
+**George Ssemaganda GS** Founder Computer scientist and part-time tour guide. Also founder of Dirt Trails, a tourism-operator SaaS platform live in East Africa — YoDataSet grew out of firsthand experience with messy, unusable field data. 
 
 _**Co-founder**_ **+** _[Name, role, and bio to confirm]_ 
 
@@ -156,7 +156,7 @@ _**Co-founder**_ **+** _[Name, role, and bio to confirm]_
 
 **[Seed target — e.g. $50K–$150K]** 
 
-No external funding received yet. Development has been bootstrapped alongside Dirt Trails, giving DataForge a working MVP before any outside capital. 
+No external funding received yet. Development has been bootstrapped alongside Dirt Trails, giving YoDataSet a working MVP before any outside capital. 
 
 - ✦ Harden processing pipeline (uploads, quality thresholds) 
 

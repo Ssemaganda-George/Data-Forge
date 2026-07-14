@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(notebook, {
     headers: {
       "Content-Type": "application/x-ipynb+json",
-      "Content-Disposition": `attachment; filename="dataforge-${suffix}.ipynb"`,
+      "Content-Disposition": `attachment; filename="yodataset-${suffix}.ipynb"`,
     },
   });
 }

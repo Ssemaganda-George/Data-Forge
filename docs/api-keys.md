@@ -1,6 +1,6 @@
 # How API keys work
 
-DataForge's API routes accept two kinds of caller: a signed-in browser
+YoDataSet's API routes accept two kinds of caller: a signed-in browser
 (session cookie) and an external script/agent (API key). This doc covers the
 API key half — where keys come from, how they're verified, and how to use
 one.
@@ -13,7 +13,7 @@ A key looks like:
 dfk_Z3JlYXQgam9iIHJlYWRpbmcgdGhpcw
 ```
 
-`dfk_` is a fixed prefix (DataForge Key) so a key is recognizable at a
+`yodk_` is a fixed prefix (YoDataSet Key) so a key is recognizable at a
 glance and so `authenticateRequest` can tell a key apart from anything else
 that might show up in an `Authorization` header. The rest is 24 random bytes
 from `crypto.randomBytes`, base64url-encoded.
@@ -24,7 +24,7 @@ from `crypto.randomBytes`, base64url-encoded.
 
 ```ts
 export function generateApiKey() {
-  const key = `dfk_${randomBytes(24).toString("base64url")}`;
+  const key = `yodk_${randomBytes(24).toString("base64url")}`;
   return { key, prefix: key.slice(0, 10), hash: hashApiKey(key) };
 }
 
@@ -40,7 +40,7 @@ is:
 | Column | Purpose |
 |---|---|
 | `keyHash` | SHA-256 of the full key — used to look the key up on every request |
-| `keyPrefix` | First 10 chars (`dfk_` + a few bytes) — shown in the UI so a key is identifiable without revealing it |
+| `keyPrefix` | First 10 chars (`yodk_` + a few bytes) — shown in the UI so a key is identifiable without revealing it |
 | `name` | User-supplied label, e.g. "Kaggle notebook" |
 | `lastUsedAt` | Updated on every successful authenticated request |
 | `revokedAt` | Set on revoke; a non-null value makes the key permanently invalid |
@@ -57,15 +57,15 @@ Every request to `/api/upload`, `/api/projects`, `/api/jobs`, `/api/export`,
 and `/api/download` goes through `authenticateRequest()` in `src/lib/auth.ts`:
 
 ```
-Authorization: Bearer dfk_...
-       │
-       ├─ starts with "dfk_"?  ──yes──▶ hash it, look up ApiKey where
+Authorization: Bearer yodk_...
+        │
+        ├─ starts with "yodk_"?  ──yes──▶ hash it, look up ApiKey where
        │                                keyHash matches and revokedAt is null
        │                                  ├─ found  → authenticated as key's owner,
        │                                  │            lastUsedAt bumped (fire-and-forget)
        │                                  └─ not found → 401
        │
-       └─ no Authorization header, or header isn't a dfk_ key
+        └─ no Authorization header, or header isn't a yodk_ key
                   │
                   └─▶ fall back to the Supabase session cookie
                        (getServerSession()) → same 401 if that's also absent
@@ -92,7 +92,7 @@ shows up in the list (marked "revoked") and `lastUsedAt` history isn't lost.
 ## Using a key
 
 ```bash
-curl -H "Authorization: Bearer dfk_..." https://data-forge-jet.vercel.app/api/projects
+curl -H "Authorization: Bearer yodk_..." https://data-forge-jet.vercel.app/api/projects
 ```
 
 ```python

@@ -50,7 +50,7 @@ class InMemoryQueueAdapter implements QueueAdapter {
 // ─── Redis adapter ────────────────────────────────────────────────────────────
 
 class RedisQueueAdapter implements QueueAdapter {
-  private static QUEUE_KEY = "dataforge:jobs";
+  private static QUEUE_KEY = "yodataset:jobs";
   private client: import("ioredis").Redis | null = null;
 
   private async getClient() {
@@ -78,7 +78,7 @@ class RedisQueueAdapter implements QueueAdapter {
   async publishResult(result: JobResult): Promise<void> {
     const client = await this.getClient();
     await client.publish(
-      `dataforge:results:${result.fileRecordId}`,
+      `yodataset:results:${result.fileRecordId}`,
       JSON.stringify(result)
     );
   }

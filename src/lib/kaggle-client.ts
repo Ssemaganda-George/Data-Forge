@@ -43,5 +43,5 @@ export function slugifyDatasetTitle(title: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 50) || "dataforge-export";
+    .slice(0, 50) || "yodataset-export";
 }

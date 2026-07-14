@@ -5,7 +5,7 @@ const ALGO = "aes-256-gcm";
 function getKey() {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) throw new Error("NEXTAUTH_SECRET is required for credential encryption");
-  return scryptSync(secret, "dataforge-platform-creds", 32);
+  return scryptSync(secret, "yodataset-platform-creds", 32);
 }
 
 export function encryptSecret(plaintext: string) {

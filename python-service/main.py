@@ -1,5 +1,5 @@
 """
-DataForge Python processing service.
+YoDataSet Python processing service.
 
 Provides:
   POST /ocr          — PDF text extraction (Tesseract / AWS Textract)
@@ -19,7 +19,7 @@ from pydantic import BaseModel, HttpUrl
 from typing import Any, Optional
 import datetime
 
-app = FastAPI(title="DataForge Processing Service", version="0.1.0")
+app = FastAPI(title="YoDataSet Processing Service", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,

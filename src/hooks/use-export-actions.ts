@@ -38,7 +38,7 @@ res = requests.post(
     timeout=120,
 )
 res.raise_for_status()
-open("dataforge-export.zip", "wb").write(res.content)`;
+open("yodataset-export.zip", "wb").write(res.content)`;
   }
 
   if (target.batchId) {
@@ -55,7 +55,7 @@ res = requests.post(
     timeout=120,
 )
 res.raise_for_status()
-open("dataforge-batch.zip", "wb").write(res.content)`;
+open("yodataset-batch.zip", "wb").write(res.content)`;
   }
 
   return `import requests
@@ -71,7 +71,7 @@ res = requests.post(
     timeout=120,
 )
 res.raise_for_status()
-open("dataforge-export.zip", "wb").write(res.content)`;
+open("yodataset-export.zip", "wb").write(res.content)`;
 }
 
 export function useExportActions(target: ExportTarget) {
@@ -109,7 +109,7 @@ export function useExportActions(target: ExportTarget) {
           const err = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(err.error ?? "Download failed");
         }
-        await saveDownload(res, `dataforge-batch-${format.toLowerCase()}.zip`);
+        await saveDownload(res, `yodataset-batch-${format.toLowerCase()}.zip`);
         return { ok: true as const, message: "Download started" };
       }
 
@@ -126,7 +126,7 @@ export function useExportActions(target: ExportTarget) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(err.error ?? "Download failed");
       }
-      await saveDownload(res, `dataforge-export-${format.toLowerCase()}.zip`);
+      await saveDownload(res, `yodataset-export-${format.toLowerCase()}.zip`);
       return { ok: true as const, message: "Download started" };
     } catch (err) {
       return {
@@ -151,10 +151,10 @@ export function useExportActions(target: ExportTarget) {
       const a = document.createElement("a");
       a.href = url;
       a.download = target.fileId
-        ? "dataforge-file.ipynb"
+        ? "yodataset-file.ipynb"
         : target.batchId
-          ? "dataforge-batch.ipynb"
-          : "dataforge-import.ipynb";
+          ? "yodataset-batch.ipynb"
+          : "yodataset-import.ipynb";
       a.click();
       URL.revokeObjectURL(url);
       window.open("https://colab.research.google.com/", "_blank");
@@ -184,10 +184,10 @@ export function useExportActions(target: ExportTarget) {
       return { ok: false as const, message: "Connect Kaggle first" };
     }
     const defaultTitle = target.fileId
-      ? "DataForge file export"
+      ? "YoDataSet file export"
       : target.batchId
-        ? "DataForge batch export"
-        : "DataForge cleaned dataset";
+        ? "YoDataSet batch export"
+        : "YoDataSet cleaned dataset";
     const title = window.prompt("Kaggle dataset title:", defaultTitle);
     if (!title) return { ok: false as const, message: "Cancelled" };
 
@@ -233,10 +233,10 @@ export function useExportActions(target: ExportTarget) {
     if (!repo) return { ok: false as const, message: "Cancelled" };
 
     const defaultTitle = target.fileId
-      ? "DataForge file export"
+      ? "YoDataSet file export"
       : target.batchId
-        ? "DataForge batch export"
-        : "DataForge cleaned dataset";
+        ? "YoDataSet batch export"
+        : "YoDataSet cleaned dataset";
     const title = window.prompt("Release title:", defaultTitle);
     if (!title) return { ok: false as const, message: "Cancelled" };
 

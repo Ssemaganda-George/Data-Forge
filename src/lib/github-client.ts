@@ -69,7 +69,7 @@ async function getOrCreateRelease(
     body: JSON.stringify({
       tag_name: tagName,
       name: title,
-      body: "Exported from DataForge",
+      body: "Exported from YoDataSet",
       draft: false,
       prerelease: false,
     }),
@@ -117,5 +117,5 @@ export function slugifyGitHubTag(title: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
-  return `${base || "dataforge-export"}-${Date.now().toString(36)}`;
+  return `${base || "yodataset-export"}-${Date.now().toString(36)}`;
 }

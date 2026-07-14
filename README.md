@@ -1,8 +1,8 @@
-# DataForge
+# YoDataSet
 
 **Turn messy files into model-ready datasets.**
 
-DataForge is a SaaS platform where users upload raw, unstructured files — images, PDFs, audio recordings, spreadsheets — and receive back a clean, structured, annotated dataset ready for machine learning. Each file passes through a typed cleaning pipeline (OCR, transcription, deduplication, PII redaction) and the results are packaged with an auto-generated Data Card for full provenance.
+YoDataSet is a SaaS platform where users upload raw, unstructured files — images, PDFs, audio recordings, spreadsheets — and receive back a clean, structured, annotated dataset ready for machine learning. Each file passes through a typed cleaning pipeline (OCR, transcription, deduplication, PII redaction) and the results are packaged with an auto-generated Data Card for full provenance.
 
 ---
 
@@ -87,7 +87,7 @@ See [Switching from temp mode to DB mode](#switching-from-temp-mode-to-db-mode).
 ## Project structure
 
 ```
-DataForge/
+YoDataSet/
 ├── prisma/
 │   └── schema.prisma           ← All data models
 │
@@ -232,7 +232,7 @@ interface CleaningResult {
 
 ```bash
 git clone <repo-url>
-cd DataForge
+cd YoDataSet
 npm install
 ```
 
@@ -391,7 +391,7 @@ interface StorageAdapter {
 To run MinIO locally with Docker:
 
 ```bash
-docker run -d --name dataforge-minio \
+docker run -d --name yodataset-minio \
   -e MINIO_ROOT_USER=minioadmin \
   -e MINIO_ROOT_PASSWORD=minioadmin \
   -p 9000:9000 -p 9001:9001 \
@@ -430,7 +430,7 @@ When your database is confirmed reachable (`npm run db:push` succeeds):
 
 ```bash
 # Create .env with your real DATABASE_URL (Prisma reads .env, not .env.local)
-echo 'DATABASE_URL="postgresql://user:password@host:5432/dataforge"' > .env
+echo 'DATABASE_URL="postgresql://user:password@host:5432/yodataset"' > .env
 
 npm run db:push        # Push schema to DB
 # or for versioned migrations:
@@ -530,12 +530,12 @@ same REST API as MCP tools (`list_projects`, `create_project`, `get_batch`,
 ```json
 {
   "mcpServers": {
-    "dataforge": {
+    "yodataset": {
       "command": "node",
       "args": ["mcp-server/server.mjs"],
       "env": {
-        "DATAFORGE_API_KEY": "dfk_...",
-        "DATAFORGE_BASE_URL": "https://data-forge-jet.vercel.app"
+        "YODATASET_API_KEY": "dfk_...",
+        "YODATASET_BASE_URL": "https://data-forge-jet.vercel.app"
       }
     }
   }

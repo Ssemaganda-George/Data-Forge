@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     session.user.email ?? "unknown"
   );
 
-  const defaultTitle = `DataForge batch ${batchId.slice(0, 8)}`;
+  const defaultTitle = `YoDataSet batch ${batchId.slice(0, 8)}`;
 
   if (destination === "kaggle") {
     try {
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     data: { batchId, format },
   });
 
-  const filename = `dataforge-${batchId.slice(0, 8)}-${format.toLowerCase()}.zip`;
+  const filename = `yodataset-${batchId.slice(0, 8)}-${format.toLowerCase()}.zip`;
   return new NextResponse(zipBuffer as unknown as BodyInit, {
     status: 201,
     headers: {

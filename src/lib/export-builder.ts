@@ -133,7 +133,7 @@ export function buildCocoJson(files: ExportFileRow[]) {
 
   return JSON.stringify(
     {
-      info: { description: "DataForge export", version: "1.0" },
+      info: { description: "YoDataSet export", version: "1.0" },
       images,
       annotations: [],
       categories: [{ id: 1, name: "object", supercategory: "none" }],

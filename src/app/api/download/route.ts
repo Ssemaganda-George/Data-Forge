@@ -17,9 +17,9 @@ function zipFilename(files: { originalName: string }[], format: string, scope: {
     return `${safeFilename(files[0].originalName)}-${format.toLowerCase()}-${ts}.zip`;
   }
   if (scope.batchId) {
-    return `dataforge-batch-${format.toLowerCase()}-${ts}.zip`;
+    return `yodataset-batch-${format.toLowerCase()}-${ts}.zip`;
   }
-  return `dataforge-export-${format.toLowerCase()}-${ts}.zip`;
+  return `yodataset-export-${format.toLowerCase()}-${ts}.zip`;
 }
 
 export async function GET(req: NextRequest) {
@@ -89,10 +89,10 @@ export async function POST(req: NextRequest) {
 
   const defaultTitle =
     body.fileId && files[0]
-      ? `DataForge: ${files[0].originalName}`
+      ? `YoDataSet: ${files[0].originalName}`
       : body.batchId
-        ? `DataForge batch ${body.batchId.slice(0, 8)}`
-        : `DataForge export ${new Date().toISOString().slice(0, 10)}`;
+        ? `YoDataSet batch ${body.batchId.slice(0, 8)}`
+        : `YoDataSet export ${new Date().toISOString().slice(0, 10)}`;
 
   if (body.destination === "kaggle") {
     const title = body.title?.trim() || defaultTitle;

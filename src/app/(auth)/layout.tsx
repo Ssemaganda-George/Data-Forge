@@ -33,7 +33,7 @@ export default async function AuthLayout({
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">DataForge</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">YoDataSet</h1>
           <p className="mt-1 text-sm text-gray-500">
             Turn messy files into model-ready datasets.
           </p>

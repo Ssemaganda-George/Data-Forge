@@ -164,7 +164,7 @@ export function IntegrationsManager() {
         <h2 className="text-sm font-semibold text-gray-700">Google Colab</h2>
         <p className="text-xs text-gray-500 mt-1">
           No setup needed. Use <strong>Export → Open in Colab</strong> on the dashboard or project export page.
-          The notebook is scoped to the file or batch you export from and prompts for your DataForge API key.
+          The notebook is scoped to the file or batch you export from and prompts for your YoDataSet API key.
         </p>
       </div>
     </div>

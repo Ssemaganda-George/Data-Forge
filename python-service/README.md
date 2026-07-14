@@ -1,6 +1,6 @@
 # Python service
 
-A FastAPI service that handles the ML/processing workloads for DataForge.
+A FastAPI service that handles the ML/processing workloads for YoDataSet.
 
 ## Setup
 

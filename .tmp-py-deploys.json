@@ -285,7 +285,7 @@
       "buildOnly": false,
       "cliAgentSessionId": "1d946e7d-828c-4cae-8634-64da4cb0d04c",
       "cliCaller": "cursor",
-      "cliMessage": "Deploy Data Forge Python processing service",
+      "cliMessage": "Deploy YoDataSet Python processing service",
       "fileServiceManifest": {},
       "imageDigest": "sha256:870c7fe99419c760f647c2ba4132aaf62ff494c116f4677ea7adcd1ee9564bef",
       "logsV2": true,
