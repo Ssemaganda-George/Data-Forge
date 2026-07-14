@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -88,9 +89,18 @@ export default function SignUpPage() {
 
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-xl p-8">
-      <h2 className="text-lg font-semibold text-[#0B2E2C] mb-6">
-        Create your account
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold text-[#0B2E2C]">
+          Create your account
+        </h2>
+        <Link
+          href="/"
+          className="text-[#4A6461] hover:text-[#0B2E2C] transition-colors"
+          aria-label="Cancel and go back"
+        >
+          <X size={18} />
+        </Link>
+      </div>
 
       <form onSubmit={handleSignUp} className="space-y-4">
         <Input
