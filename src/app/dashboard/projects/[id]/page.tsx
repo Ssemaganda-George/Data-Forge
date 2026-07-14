@@ -43,7 +43,7 @@ export default async function ProjectPage({
     <div className="space-y-8">
       <div>
         <Link
-          href="/projects"
+          href="/dashboard/projects"
           className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 mb-4"
         >
           <IconArrowLeft size={14} />

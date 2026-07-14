@@ -79,7 +79,7 @@ export default function NewProjectPage() {
   return (
     <div className="max-w-xl">
       <Link
-        href="/projects"
+        href="/dashboard/projects"
         className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 mb-6"
       >
         <IconArrowLeft size={14} />

@@ -16,20 +16,20 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: IconLayoutDashboard },
-  { href: "/projects", label: "Projects", icon: IconFolders },
-  { href: "/datasets", label: "Datasets", icon: IconDatabase },
-  { href: "/usage", label: "Usage", icon: IconChartBar },
-  { href: "/settings/api-keys", label: "API Keys", icon: IconKey },
-  { href: "/settings/integrations", label: "Integrations", icon: IconPlug },
-  { href: "/settings/billing", label: "Settings", icon: IconSettings },
+  { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard },
+  { href: "/dashboard/projects", label: "Projects", icon: IconFolders },
+  { href: "/dashboard/datasets", label: "Datasets", icon: IconDatabase },
+  { href: "/dashboard/usage", label: "Usage", icon: IconChartBar },
+  { href: "/dashboard/settings/api-keys", label: "API Keys", icon: IconKey },
+  { href: "/dashboard/settings/integrations", label: "Integrations", icon: IconPlug },
+  { href: "/dashboard/settings/billing", label: "Settings", icon: IconSettings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   function isActive(href: string) {
-    if (href === "/") return pathname === "/";
+    if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   }
 

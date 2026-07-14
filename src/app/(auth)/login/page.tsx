@@ -32,7 +32,7 @@ export default function LoginPage() {
       if (!res.ok) {
         setError(data.error || "Invalid email or password.");
       } else {
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch {

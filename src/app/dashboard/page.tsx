@@ -109,7 +109,7 @@ export default async function DashboardPage() {
                 </Button>
               </Link>
             ) : (
-              <Link href="/projects">
+              <Link href="/dashboard/projects">
                 <Button variant="secondary">View projects</Button>
               </Link>
             )}
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
             Recent projects
           </h2>
           <Link
-            href="/projects"
+            href="/dashboard/projects"
             className="text-xs text-brand-600 hover:underline flex items-center gap-1"
           >
             View all <IconChevronRight size={13} />
