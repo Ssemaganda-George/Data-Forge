@@ -11,10 +11,12 @@ export default async function DashboardLayout({
   const session = await requireServerSession();
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-8">{children}</div>
+        <div className="max-w-6xl mx-auto px-4 py-4 lg:px-8 lg:py-8">
+          {children}
+        </div>
       </main>
     </div>
   );
