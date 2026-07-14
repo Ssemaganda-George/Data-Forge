@@ -42,7 +42,7 @@ export function Sidebar() {
     setSigningOut(true);
     try {
       await fetch("/api/auth/signout", { method: "POST" });
-      window.location.href = "/login";
+      window.location.href = "/";
     } catch {
       setSigningOut(false);
       setConfirming(false);
