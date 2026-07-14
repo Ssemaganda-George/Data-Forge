@@ -6,19 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
-type Mode = "credentials" | "email";
-
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [magicSent, setMagicSent] = useState(false);
 
-  async function handleCredentialsSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -42,145 +38,49 @@ export default function LoginPage() {
     }
   }
 
-  async function handleEmailSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) {
-      setError("Email is required.");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/auth/magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to send magic link. Please try again.");
-      } else {
-        setMagicSent(true);
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (magicSent) {
-    return (
-      <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 text-center">
-        <p className="text-sm font-medium text-[#0B2E2C] mb-1">Check your email</p>
-        <p className="text-sm text-[#4A6461]">
-          We sent a magic link to <strong>{email}</strong>. Click it to sign in.
-        </p>
-        <button
-          onClick={() => setMagicSent(false)}
-          className="mt-4 text-xs text-[#028090] hover:underline"
-        >
-          Back to login
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-xl p-8">
       <h2 className="text-lg font-semibold text-[#0B2E2C] mb-6">Sign in</h2>
 
-      <div className="flex rounded-md bg-[#F7FAF9] border border-[#E5E7EB] p-1 mb-6">
-        <button
-          type="button"
-          onClick={() => setMode("credentials")}
-          className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
-            mode === "credentials"
-              ? "bg-white text-[#0B2E2C] border border-[#E5E7EB]"
-              : "text-[#4A6461] hover:text-[#0B2E2C]"
-          }`}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Email address"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError("");
+          }}
+          autoComplete="email"
+        />
+        <Input
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError("");
+          }}
+          autoComplete="current-password"
+          error={error}
+          showPasswordToggle
+          passwordVisible={showPassword}
+          onTogglePassword={() => setShowPassword(!showPassword)}
+        />
+        {error && (
+          <p className="text-xs text-red-600">{error}</p>
+        )}
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full justify-center"
+          loading={loading}
         >
-          Password
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("email")}
-          className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
-            mode === "email"
-              ? "bg-white text-[#0B2E2C] border border-[#E5E7EB]"
-              : "text-[#4A6461] hover:text-[#0B2E2C]"
-          }`}
-        >
-          Magic link
-        </button>
-      </div>
-
-      {mode === "credentials" ? (
-        <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-          <Input
-            label="Email address"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError("");
-            }}
-            autoComplete="email"
-          />
-          <Input
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
-            autoComplete="current-password"
-            error={error}
-            showPasswordToggle
-            passwordVisible={showPassword}
-            onTogglePassword={() => setShowPassword(!showPassword)}
-          />
-          {error && mode === "credentials" && (
-            <p className="text-xs text-red-600">{error}</p>
-          )}
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full justify-center"
-            loading={loading}
-          >
-            Sign in
-          </Button>
-        </form>
-      ) : (
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
-          <Input
-            label="Email address"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError("");
-            }}
-            autoComplete="email"
-          />
-          {error && mode === "email" && (
-            <p className="text-xs text-red-600">{error}</p>
-          )}
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full justify-center"
-            loading={loading}
-          >
-            Send magic link
-          </Button>
-        </form>
-      )}
+          Sign in
+        </Button>
+      </form>
 
       <p className="mt-6 text-center text-xs text-[#4A6461]">
         No account?{" "}
