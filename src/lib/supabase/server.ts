@@ -24,3 +24,22 @@ export function createSupabaseClient() {
     },
   });
 }
+
+export function createSupabaseClientForRoute(request: Request) {
+  return createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    cookies: {
+      getAll() {
+        return request.headers.get("cookie")?.split("; ").map((c) => {
+          const [name, value] = c.split("=");
+          return { name, value };
+        }) || [];
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          // In route handlers, cookies are set via response headers
+          // This is handled by the supabase-ssr package automatically
+        });
+      },
+    },
+  });
+}

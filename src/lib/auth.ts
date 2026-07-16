@@ -28,6 +28,7 @@ async function ensureAppUser(authUser: SupabaseUser) {
         (authUser.user_metadata?.name as string | undefined) ||
         email.split("@")[0],
       image: (authUser.user_metadata?.avatar_url as string | undefined) || null,
+      role: "DEVELOPER",
     },
   });
 }
@@ -118,8 +119,19 @@ export async function signInWithPassword(email: string, password: string) {
       return { error: "Authentication failed" };
     }
 
-    await ensureAppUser(data.user);
-    return { user: data.user };
+    const appUser = await ensureAppUser(data.user);
+    
+    if (appUser) {
+      await db.user.update({
+        where: { id: data.user.id },
+        data: { lastLoginAt: new Date() },
+      }).catch(() => {});
+    }
+
+    return { 
+      user: data.user,
+      role: appUser?.role || "DEVELOPER"
+    };
   } catch (error) {
     console.error("[AUTH] signIn unexpected error:", error);
     return { error: "Authentication failed" };

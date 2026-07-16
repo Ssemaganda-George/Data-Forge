@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 401 });
     }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ 
+      ok: true, 
+      role: result.role 
+    });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }

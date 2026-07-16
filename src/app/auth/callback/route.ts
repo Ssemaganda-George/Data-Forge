@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/dashboard";
+  let next = requestUrl.searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const supabase = createSupabaseClient();
@@ -24,11 +24,22 @@ export async function GET(request: NextRequest) {
             image:
               (data.user.user_metadata?.avatar_url as string | undefined) ||
               null,
+            role: "DEVELOPER",
           },
         });
+      } else {
+        await db.user.update({
+          where: { id: data.user.id },
+          data: { lastLoginAt: new Date() },
+        }).catch(() => {});
+        
+        if (existing.role === "ADMIN") {
+          next = "/admin";
+        }
       }
     }
   }
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin));
+  const redirectUrl = new URL(next, requestUrl.origin);
+  return NextResponse.redirect(redirectUrl);
 }
