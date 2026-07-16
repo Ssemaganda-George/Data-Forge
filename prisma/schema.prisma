@@ -68,6 +68,40 @@ model User {
   platformConnections PlatformConnection[]
   inquiries Inquiry[]
   subscriptions Subscription[]
+
+  // ─── Credits ──────────────────────────────────────────────────────────────
+  creditsRemaining    Int       @default(0)
+  creditsResetAt      DateTime  @default(now())
+  creditBalanceTopUp  Int       @default(0)
+  creditUsages        CreditUsage[]
+  // Trial result (if any) to import into the user's first project after signup.
+  trialCarryOverId    String?  @map("trialCarryOverId")
+}
+
+model CreditUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  fileRecordId String?
+  credits     Int
+  reason      String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model TrialUsage {
+  id          String   @id @default(cuid())
+  ipHash      String
+  fileType    String
+  creditsUsed Int
+  convertedToUserId String?
+  createdAt   DateTime @default(now())
+
+  @@index([ipHash])
+  @@index([createdAt])
 }
 
 model ApiKey {

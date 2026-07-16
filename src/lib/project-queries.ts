@@ -217,6 +217,8 @@ export async function getDatasetsForUser(userId: string) {
   });
 }
 
+import { ensureCreditBalance } from "@/lib/pricing/usage";
+
 const PLAN_LIMIT_GB = 100;
 
 export async function getUsageForUser(userId: string) {
@@ -224,17 +226,23 @@ export async function getUsageForUser(userId: string) {
   const monthStart = startOfMonth(now);
   const chartStart = startOfMonth(subMonths(now, 5));
 
-  const files = await db.fileRecord.findMany({
-    where: {
-      batch: { project: { userId } },
-      createdAt: { gte: chartStart },
-    },
-    select: { sizeBytes: true, createdAt: true },
-  });
-
-  const totalFiles = await db.fileRecord.count({
-    where: { batch: { project: { userId } } },
-  });
+  const [files, totalFiles, balance, creditUsages] = await Promise.all([
+    db.fileRecord.findMany({
+      where: {
+        batch: { project: { userId } },
+        createdAt: { gte: chartStart },
+      },
+      select: { sizeBytes: true, createdAt: true },
+    }),
+    db.fileRecord.count({
+      where: { batch: { project: { userId } } },
+    }),
+    ensureCreditBalance(userId),
+    db.creditUsage.findMany({
+      where: { userId, createdAt: { gte: monthStart } },
+      select: { credits: true },
+    }),
+  ]);
 
   const monthFiles = files.filter((f) => f.createdAt >= monthStart);
   const monthBytes = monthFiles.reduce(
@@ -255,19 +263,27 @@ export async function getUsageForUser(userId: string) {
     months.push({ month: key, gb: Math.round((bytes / 1024 ** 3) * 10) / 10 });
   }
 
-  const nextReset = startOfMonth(subMonths(now, -1));
+  const monthCreditsUsed = creditUsages.reduce((sum, c) => sum + c.credits, 0);
+  const nextReset = balance.resetAt ?? startOfMonth(subMonths(now, -1));
 
   return {
     monthGb: Math.round(monthGb * 10) / 10,
     monthFileCount: monthFiles.length,
     totalFiles,
     planLimitGb: PLAN_LIMIT_GB,
-    planRemainingGb: Math.max(
-      0,
-      Math.round((PLAN_LIMIT_GB - monthGb) * 10) / 10
-    ),
+    planRemainingGb: Math.max(0, Math.round((PLAN_LIMIT_GB - monthGb) * 10) / 10),
+    // ── Credits ──
+    creditsRemaining: balance.unlimited ? null : balance.remaining,
+    creditsLimit: balance.unlimited ? null : balance.limit,
+    creditsUsedMonth: monthCreditsUsed,
+    creditsUnlimited: balance.unlimited,
+    quotaPercent: balance.unlimited
+      ? 0
+      : Math.min(
+          100,
+          Math.round((monthCreditsUsed / Math.max(balance.limit, 1)) * 100)
+        ),
     months,
     resetDate: format(nextReset, "d MMMM yyyy"),
-    quotaPercent: Math.min(100, Math.round((monthGb / PLAN_LIMIT_GB) * 100)),
   };
 }

@@ -4,6 +4,7 @@ import { StatsRow } from "@/components/marketing/stats-row";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { UseCaseCards } from "@/components/marketing/use-case-cards";
 import { ClosingCta } from "@/components/marketing/closing-cta";
+import { TrialWidget } from "@/components/marketing/trial-widget";
 
 export default function LandingPage() {
   return (
@@ -12,6 +13,9 @@ export default function LandingPage() {
       <main>
         <Hero />
         <StatsRow />
+        <section id="try-free" className="mx-auto max-w-2xl px-6 py-12">
+          <TrialWidget />
+        </section>
         <HowItWorks />
         <UseCaseCards />
         <ClosingCta />

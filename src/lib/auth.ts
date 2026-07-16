@@ -13,12 +13,22 @@ export type AppSession = {
   };
 };
 
-async function ensureAppUser(authUser: SupabaseUser) {
+async function ensureAppUser(
+  authUser: SupabaseUser,
+  trialId?: string | null
+) {
   const email = authUser.email;
   if (!email) return null;
 
   const existing = await db.user.findUnique({ where: { id: authUser.id } });
-  if (existing) return existing;
+  if (existing) {
+    if (trialId && !existing.trialCarryOverId) {
+      await db.user
+        .update({ where: { id: authUser.id }, data: { trialCarryOverId: trialId } })
+        .catch(() => {});
+    }
+    return existing;
+  }
 
   return db.user.create({
     data: {
@@ -29,6 +39,7 @@ async function ensureAppUser(authUser: SupabaseUser) {
         email.split("@")[0],
       image: (authUser.user_metadata?.avatar_url as string | undefined) || null,
       role: "DEVELOPER",
+      trialCarryOverId: trialId ?? null,
     },
   });
 }
@@ -141,7 +152,8 @@ export async function signInWithPassword(email: string, password: string) {
 export async function signUpWithPassword(
   email: string,
   password: string,
-  name?: string
+  name?: string,
+  trialId?: string | null
 ) {
   try {
     const supabase = createSupabaseClient();
@@ -150,7 +162,7 @@ export async function signUpWithPassword(
       password,
       options: {
         data: name ? { name } : undefined,
-        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback?trial=${trialId ?? ""}`,
       },
     });
 
@@ -168,7 +180,7 @@ export async function signUpWithPassword(
     }
 
     if (data.session) {
-      await ensureAppUser(data.user);
+      await ensureAppUser(data.user, trialId);
       return { user: data.user };
     }
 

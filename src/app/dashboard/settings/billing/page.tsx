@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireServerSession } from "@/lib/auth";
 import { getUsageForUser } from "@/lib/project-queries";
 import { PLANS, CURRENT_PLAN_ID } from "@/lib/plans";
+import { DEFAULT_TOP_UP_PACK } from "@/lib/pricing/plans";
 import { Button } from "@/components/ui/button";
 import { IconCheck } from "@tabler/icons-react";
 
@@ -31,8 +33,10 @@ export default async function BillingPage() {
               {currentPlan.name}
             </p>
             <p className="text-sm text-gray-500">
-              {currentPlan.price} / month · {usage.monthGb} GB of{" "}
-              {usage.planLimitGb} GB used
+              {currentPlan.price} / month ·{" "}
+              {usage.creditsUnlimited
+                ? "Unlimited credits"
+                : `${usage.creditsRemaining?.toLocaleString()} of ${usage.creditsLimit?.toLocaleString()} credits left`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -40,16 +44,36 @@ export default async function BillingPage() {
             <Button variant="secondary">Cancel plan</Button>
           </div>
         </div>
-        <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand-500 rounded-full"
-            style={{ width: `${usage.quotaPercent}%` }}
-          />
-        </div>
-        <p className="mt-1 text-xs text-gray-400">
-          {usage.monthGb} GB / {usage.planLimitGb} GB · Resets{" "}
-          {usage.resetDate}
-        </p>
+        {!usage.creditsUnlimited && (
+          <>
+            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-500 rounded-full"
+                style={{ width: `${usage.quotaPercent}%` }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              {usage.creditsUsedMonth.toLocaleString()} credits used · Resets{" "}
+              {usage.resetDate}
+            </p>
+          </>
+        )}
+        {!usage.creditsUnlimited && (usage.creditsRemaining ?? 0) <= 0 && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-900">
+              Out of credits this month.
+            </p>
+            <p className="mt-1 text-xs text-amber-800">
+              Need more mid-month? Buy a top-up pack anytime — no forced upgrade.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="primary">Buy {DEFAULT_TOP_UP_PACK.credits.toLocaleString()} credits · {DEFAULT_TOP_UP_PACK.price}</Button>
+              <Link href="/pricing" className="inline-flex items-center text-xs font-medium text-[#0B2E2C] border border-[#E5E7EB] rounded-md px-3 py-1.5 hover:bg-white transition-colors">
+                Upgrade plan
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
 
       <section>

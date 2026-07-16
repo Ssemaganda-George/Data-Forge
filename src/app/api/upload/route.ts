@@ -3,6 +3,8 @@ import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { runProcessing } from "@/lib/memory-store";
 import { resolveUploadBatch, syncBatchStatus } from "@/lib/project-queries";
+import { estimateCredits } from "@/lib/pricing/estimate";
+import { deductCredits } from "@/lib/pricing/usage";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -101,6 +103,32 @@ export async function POST(req: NextRequest) {
       throw processingError;
     }
 
+    // ── Credit cost (estimate → deduct) ─────────────────────────────────────
+    // Audio duration isn't known before processing; approximate minutes from
+    // size (1 MB ≈ 1 min of typical compressed audio). Replace with real
+    // transcription duration once Whisper segments are parsed in production.
+    const isAudio = fileType.startsWith("audio/") || fileType.startsWith("video/");
+    const estimatedDurationMinutes = isAudio
+      ? Math.max(1, Math.round(file.size / (1024 * 1024)))
+      : undefined;
+    const estimate = estimateCredits(fileType, file.size, {
+      estimatedDurationMinutes,
+    });
+
+    let overage = false;
+    try {
+      const deduction = await deductCredits({
+        userId: session.user.id,
+        credits: estimate.credits,
+        reason: `${estimate.processingType}:${file.name}`,
+        fileRecordId: fileRecord.id,
+      });
+      overage = deduction.overage;
+    } catch (creditErr) {
+      // Never let a credit error block the result the user already paid for.
+      console.error("[upload POST] credit deduction error:", creditErr);
+    }
+
     await syncBatchStatus(batch.id);
     await db.project.update({
       where: { id: projectId },
@@ -119,6 +147,8 @@ export async function POST(req: NextRequest) {
         batchId: batch.id,
         batchStatus: updatedBatch?.status ?? "PROCESSING",
         status: "complete",
+        creditsUsed: estimate.credits,
+        overage,
         cleaningActions: result.cleaningActions,
         confidenceScore: result.confidenceScore,
         flaggedForReview: result.flaggedForReview,

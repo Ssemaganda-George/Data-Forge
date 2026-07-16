@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { importTrialIntoNewAccount } from "@/lib/trial/import";
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(120),
@@ -58,6 +59,23 @@ export async function POST(req: NextRequest) {
     },
     include: { batches: { select: { id: true } } },
   });
+
+  // Carry a free-trial file into the user's first project (no re-upload).
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { trialCarryOverId: true, _count: { select: { projects: true } } },
+  });
+  if (user?.trialCarryOverId && user._count.projects <= 1) {
+    try {
+      await importTrialIntoNewAccount(session.user.id, user.trialCarryOverId);
+      await db.user.update({
+        where: { id: session.user.id },
+        data: { trialCarryOverId: null },
+      });
+    } catch (err) {
+      console.error("[projects POST] trial import error:", err);
+    }
+  }
 
   return NextResponse.json({ id: project.id }, { status: 201 });
 }

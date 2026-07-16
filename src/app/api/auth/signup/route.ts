@@ -3,7 +3,7 @@ import { signUpWithPassword } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name } = await req.json();
+    const { email, password, name, trialId } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await signUpWithPassword(email, password, name);
+    const result = await signUpWithPassword(email, password, name, trialId ?? null);
 
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });

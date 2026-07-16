@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
+import { importTrialIntoNewAccount } from "@/lib/trial/import";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
     if (!error && data.user?.email) {
       const existing = await db.user.findUnique({ where: { id: data.user.id } });
       if (!existing) {
+        const trialId = requestUrl.searchParams.get("trial") ?? null;
         await db.user.create({
           data: {
             id: data.user.id,
@@ -25,6 +27,7 @@ export async function GET(request: NextRequest) {
               (data.user.user_metadata?.avatar_url as string | undefined) ||
               null,
             role: "DEVELOPER",
+            trialCarryOverId: trialId,
           },
         });
       } else {
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
           where: { id: data.user.id },
           data: { lastLoginAt: new Date() },
         }).catch(() => {});
-        
+
         if (existing.role === "ADMIN") {
           next = "/admin";
         }

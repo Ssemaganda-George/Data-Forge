@@ -7,6 +7,7 @@ import {
   getProjectsForUser,
   moduleLabel,
 } from "@/lib/project-queries";
+import { ensureCreditBalance } from "@/lib/pricing/usage";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,14 +16,14 @@ import {
   IconFiles,
   IconDatabase,
   IconStar,
-  IconCloud,
+  IconCoins,
   IconMicrophone,
   IconTable,
   IconPlus,
   IconArrowRight,
   IconChevronRight,
 } from "@tabler/icons-react";
-import { formatBytes } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -31,12 +32,17 @@ export default async function DashboardPage() {
   const firstName = session.user.name?.split(" ")[0] ?? "there";
   const userId = session.user.id;
 
-  const [stats, projects] = await Promise.all([
+  const [stats, projects, credits] = await Promise.all([
     getDashboardStats(userId),
     getProjectsForUser(userId),
+    ensureCreditBalance(userId),
   ]);
 
   const recentProjects = projects.slice(0, 4);
+
+  const creditsRemainingLabel = credits.unlimited
+    ? "Unlimited"
+    : `${formatNumber(credits.remaining)}`;
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -77,9 +83,9 @@ export default async function DashboardPage() {
             icon={<IconStar size={18} stroke={1.5} />}
           />
           <StatCard
-            label="Storage used"
-            value={formatBytes(stats.storageUsedBytes)}
-            icon={<IconCloud size={18} stroke={1.5} />}
+            label="Credits remaining this month"
+            value={creditsRemainingLabel}
+            icon={<IconCoins size={18} stroke={1.5} />}
           />
         </div>
       </section>

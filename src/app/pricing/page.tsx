@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/marketing/navbar";
 import { PLANS } from "@/lib/plans";
 import { ContactForm } from "@/components/contact-form";
+import { Check, Sparkles } from "lucide-react";
 
 export default function PricingPage() {
   const [showContactForm, setShowContactForm] = useState(false);
@@ -17,69 +18,94 @@ export default function PricingPage() {
         <section className="mx-auto max-w-6xl px-6 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="mx-auto max-w-[620px] text-center">
             <h1 className="text-4xl md:text-5xl font-semibold text-[#0B2E2C] leading-tight tracking-tight">
-              Simple, usage-based pricing
+              Simple, credits-based pricing
             </h1>
             <p className="mt-4 text-lg text-[#4A6461] leading-relaxed">
-              Start free, scale as you process more data. No hidden fees, no
-              minimum commitment.
+              Pay for what you actually process. Spreadsheets and text are cheap;
+              audio and OCR cost more because they&apos;re more expensive to run.
             </p>
           </div>
         </section>
 
         <section className="mx-auto max-w-6xl px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className={`bg-white border rounded-xl p-6 ${
-                  plan.featured
-                    ? "border-[#028090] shadow-none"
-                    : "border-[#E5E7EB]"
-                }`}
-              >
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-[#0B2E2C]">
-                    {plan.name}
-                  </h3>
-                  <p className="text-xs text-[#4A6461] mt-1">
-                    {plan.description}
-                  </p>
-                </div>
-
-                <div className="mb-6">
-                  <span className="text-3xl font-semibold text-[#0B2E2C]">
-                    {plan.price}
-                  </span>
-                  <span className="text-xs text-[#4A6461] ml-1">
-                    /{plan.period}
-                  </span>
-                </div>
-
-                <ul className="space-y-2.5 mb-6">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="text-xs text-[#4A6461] flex items-start gap-2"
-                    >
-                      <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-[#028090] shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={plan.href}
-                  className={`block text-center text-sm font-medium rounded-md px-4 py-2 transition-colors ${
-                    plan.featured
-                      ? "text-white bg-[#028090] hover:bg-[#026c78]"
-                      : "text-[#0B2E2C] border border-[#E5E7EB] hover:bg-white"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+            {PLANS.map((plan) => {
+              const featured = plan.featured;
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative bg-white rounded-xl p-6 ${
+                    featured
+                      ? "border-2 border-[#028090]"
+                      : "border border-[#E5E7EB]"
                   }`}
                 >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
+                  {featured && (
+                    <div className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-[#028090] px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                      <Sparkles size={11} />
+                      Most popular
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-[#0B2E2C]">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-[#4A6461] mt-1">
+                      {plan.description}
+                    </p>
+                  </div>
+
+                  <div className="mb-6 flex items-baseline gap-1">
+                    <span className="text-3xl font-semibold text-[#0B2E2C]">
+                      {plan.price}
+                    </span>
+                    {plan.period && (
+                      <span className="text-xs text-[#4A6461]">
+                        {plan.period}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#E5E7EB] my-4" />
+
+                  <ul className="space-y-2.5 mb-6">
+                    {plan.features.map((feature) => (
+                      <li
+                        key={feature}
+                        className="text-xs text-[#4A6461] flex items-start gap-2"
+                      >
+                        <Check
+                          size={14}
+                          className="mt-0.5 text-[#028090] shrink-0"
+                        />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    href={plan.href}
+                    className={`block text-center text-sm font-medium rounded-md px-4 py-2 transition-colors ${
+                      featured
+                        ? "text-white bg-[#028090] hover:bg-[#026c78]"
+                        : "text-[#0B2E2C] border border-[#E5E7EB] hover:bg-[#F7FAF9]"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
+
+          <p className="mt-8 text-center text-sm text-[#4A6461] max-w-2xl mx-auto">
+            1 credit is roughly 1MB of spreadsheet or text data. Audio and OCR
+            use more credits per file since they cost more to process.
+          </p>
+          <p className="mt-2 text-center text-sm text-[#4A6461] max-w-2xl mx-auto">
+            Need more mid-month? Buy a top-up pack anytime — no forced upgrade.
+          </p>
         </section>
 
         <section className="mx-auto max-w-6xl px-6 py-16">
