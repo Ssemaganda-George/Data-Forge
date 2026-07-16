@@ -185,7 +185,31 @@ export async function syncBatchStatus(batchId: string) {
   });
 }
 
-export async function getDatasetsForUser(userId: string) {
+export interface DatasetFilePreview {
+  id: string;
+  originalName: string;
+  fileType: string;
+  sizeBytes: number | null;
+  confidenceScore: number | null;
+  flaggedForReview: boolean;
+  cleanedContent: string | null;
+  cleaningActions: { type: string; description: string }[];
+}
+
+export interface DatasetSummary {
+  id: string;
+  name: string;
+  format: string;
+  project: string;
+  fileCount: number;
+  sizeBytes: number;
+  downloadUrl: string | null;
+  createdAt: string;
+  batchId: string;
+  files: DatasetFilePreview[];
+}
+
+export async function getDatasetsForUser(userId: string): Promise<DatasetSummary[]> {
   const exports = await db.datasetExport.findMany({
     where: { batch: { project: { userId } } },
     orderBy: { createdAt: "desc" },
@@ -193,7 +217,19 @@ export async function getDatasetsForUser(userId: string) {
       batch: {
         include: {
           project: { select: { name: true } },
-          files: { select: { sizeBytes: true } },
+          files: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              originalName: true,
+              fileType: true,
+              sizeBytes: true,
+              confidenceScore: true,
+              flaggedForReview: true,
+              cleanedContent: true,
+              cleaningActions: true,
+            },
+          },
         },
       },
     },
@@ -213,6 +249,17 @@ export async function getDatasetsForUser(userId: string) {
       sizeBytes,
       downloadUrl: exp.downloadUrl,
       createdAt: format(exp.createdAt, "MMM d, yyyy"),
+      batchId: exp.batchId,
+      files: exp.batch.files.map((f) => ({
+        id: f.id,
+        originalName: f.originalName,
+        fileType: f.fileType,
+        sizeBytes: f.sizeBytes,
+        confidenceScore: f.confidenceScore,
+        flaggedForReview: f.flaggedForReview,
+        cleanedContent: f.cleanedContent,
+        cleaningActions: parseCleaningActions(f.cleaningActions),
+      })),
     };
   });
 }
