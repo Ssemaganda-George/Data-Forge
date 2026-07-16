@@ -135,6 +135,15 @@ export async function POST(req: NextRequest) {
       data: { updatedAt: new Date() },
     });
 
+    // Increment the persistent "documents cleaned" counter.
+    try {
+      const { incrementSiteStat, DOCUMENTS_CLEANED_KEY } =
+        await import("@/lib/site-stats");
+      await incrementSiteStat(DOCUMENTS_CLEANED_KEY, 1);
+    } catch (statErr) {
+      console.error("[upload POST] stat increment error:", statErr);
+    }
+
     const updatedBatch = await db.uploadBatch.findUnique({
       where: { id: batch.id },
       select: { status: true },

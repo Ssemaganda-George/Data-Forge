@@ -41,10 +41,6 @@ export function TrialWidget() {
   const [result, setResult] = useState<TrialResultData | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [expandedType, setExpandedType] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailError, setEmailError] = useState("");
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -114,26 +110,6 @@ export function TrialWidget() {
     setResult(null);
     setError("");
     setPhase("idle");
-  }
-
-  async function sendReport() {
-    if (!result || !email.trim()) return;
-    setEmailError("");
-    setSending(true);
-    try {
-      const res = await fetch("/api/trial/send-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trialId: result.trialId, email: email.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not send email");
-      setEmailSent(true);
-    } catch (err) {
-      setEmailError(err instanceof Error ? err.message : "Could not send email");
-    } finally {
-      setSending(false);
-    }
   }
 
   return (
@@ -276,43 +252,9 @@ export function TrialWidget() {
                 project automatically.
               </p>
 
-              {/* Email the report — also confirms we can reach this address */}
-              <div className="mt-3 rounded-lg border border-[#E5E7EB] bg-white p-3">
-                {emailSent ? (
-                  <p className="text-xs text-green-700 flex items-center gap-1.5">
-                    <Check size={13} /> Sent! Check your inbox to confirm your email.
-                  </p>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setEmailError("");
-                      }}
-                      placeholder="you@email.com"
-                      className="flex-1 text-sm rounded-md border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#028090]/30"
-                    />
-                    <button
-                      type="button"
-                      onClick={sendReport}
-                      disabled={sending || !email.trim()}
-                      className="text-sm font-medium text-white bg-[#028090] rounded-md px-3 py-2 hover:bg-[#026c78] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {sending ? "Sending…" : "Email my report"}
-                    </button>
-                  </div>
-                )}
-                {!emailSent && (
-                  <p className="mt-1.5 text-[11px] text-[#4A6461]">
-                    We&apos;ll email the AI report — this also verifies your address.
-                  </p>
-                )}
-                {emailError && (
-                  <p className="mt-1.5 text-[11px] text-red-600">{emailError}</p>
-                )}
-              </div>
+              <p className="mt-3 text-[11px] text-[#4A6461]">
+                We&apos;ll email your AI report to the address you sign up with.
+              </p>
             </div>
             <div className="relative px-5 py-4">
               <div className="flex items-center justify-between">
@@ -476,8 +418,10 @@ function AiAnalysisPanel({ content }: { content: string }) {
           <p className="text-xs font-semibold text-gray-700 mb-1">Q&A Training Pairs</p>
           <div className="space-y-2">
             {qaPairs.map((qa, i) => {
-              const q = qa.match(/^Q\d+:\s*([\s\S]*)/)?.[1] ?? qa;
-              const a = q.match(/A\d+:\s*([\s\S]*)/)?.[1] ?? "";
+              const q = (qa.match(/^Q\d+:\s*([\s\S]*)/)?.[1] ?? qa)
+                .replace(/A\d+:\s*[\s\S]*$/, "")
+                .trim();
+              const a = qa.match(/A\d+:\s*([\s\S]*)/)?.[1] ?? "";
               return (
                 <div key={i} className="rounded-md bg-white border border-[#E5E7EB] p-2.5">
                   <p className="text-xs font-medium text-gray-800">{q}</p>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signUpWithPassword } from "@/lib/auth";
+import { sendTrialReportEmail } from "@/lib/trial/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,6 +24,16 @@ export async function POST(req: NextRequest) {
 
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    // Email the AI report to the just-created account, using the trial id if
+    // the user came from the free trial widget.
+    if (trialId) {
+      try {
+        await sendTrialReportEmail(trialId, email);
+      } catch (err) {
+        console.error("[signup] failed to send trial report email:", err);
+      }
     }
 
     if (result.needsEmailConfirmation) {

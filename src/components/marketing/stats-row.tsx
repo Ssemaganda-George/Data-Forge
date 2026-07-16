@@ -8,8 +8,8 @@ interface Stats {
 }
 
 const FALLBACK: Stats = {
-  documentsCleaned: 12480,
-  datasetsGenerated: 47,
+  documentsCleaned: 0,
+  datasetsGenerated: 0,
 };
 
 export function StatsRow() {
@@ -20,11 +20,22 @@ export function StatsRow() {
 
     fetch("/api/stats")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: Stats) => {
-        if (!cancelled) setStats(data);
+      .then((data: Partial<Stats>) => {
+        if (!cancelled) {
+          setStats({
+            documentsCleaned:
+              typeof data.documentsCleaned === "number"
+                ? data.documentsCleaned
+                : FALLBACK.documentsCleaned,
+            datasetsGenerated:
+              typeof data.datasetsGenerated === "number"
+                ? data.datasetsGenerated
+                : FALLBACK.datasetsGenerated,
+          });
+        }
       })
       .catch(() => {
-        if (!cancelled) setStats((prev) => prev);
+        if (!cancelled) setStats(FALLBACK);
       });
 
     return () => {

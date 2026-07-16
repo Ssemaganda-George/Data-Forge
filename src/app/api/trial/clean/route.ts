@@ -101,6 +101,15 @@ export async function POST(req: NextRequest) {
       console.error("[trial/clean] trial usage log error:", err);
     }
 
+    // Increment the persistent "documents cleaned" counter for anonymous trials.
+    try {
+      const { incrementSiteStat, DOCUMENTS_CLEANED_KEY } =
+        await import("@/lib/site-stats");
+      await incrementSiteStat(DOCUMENTS_CLEANED_KEY, 1);
+    } catch (err) {
+      console.error("[trial/clean] stat increment error:", err);
+    }
+
     const stored = putTrialResult({
       originalName: file.name,
       fileType,
