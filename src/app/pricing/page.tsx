@@ -1,12 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/marketing/navbar";
 import { PLANS } from "@/lib/plans";
-
-export const metadata = {
-  title: "Pricing · YoDataSet",
-};
+import { ContactForm } from "@/components/contact-form";
 
 export default function PricingPage() {
+  const [showContactForm, setShowContactForm] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#F7FAF9] text-[#0B2E2C]">
       <Navbar />
@@ -89,14 +91,16 @@ export default function PricingPage() {
               We work with research labs, NGOs, and government bodies on tailored
               data-cleaning pipelines and private deployments.
             </p>
-            <Link
-              href="/signup"
+            <button
+              onClick={() => setShowContactForm(true)}
               className="inline-block text-sm font-medium text-white bg-[#028090] rounded-md px-5 py-2.5 hover:bg-[#026c78] transition-colors"
             >
               Talk to us
-            </Link>
+            </button>
           </div>
         </section>
+
+        <ContactForm isOpen={showContactForm} onClose={() => setShowContactForm(false)} />
       </main>
     </div>
   );

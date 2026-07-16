@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/marketing/navbar";
+import { ContactForm } from "@/components/contact-form";
 
 const endpoints = [
   { method: "POST", path: "/api/upload", description: "Upload a single file for cleaning." },
@@ -44,6 +45,8 @@ export default function DevelopersPage() {
   const [keyName, setKeyName] = useState("default");
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
 
   async function handleCreateKey(e: React.FormEvent) {
     e.preventDefault();
@@ -155,6 +158,16 @@ export default function DevelopersPage() {
             </div>
           </div>
         </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-8">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 md:p-10 text-center">
+            <h2 className="text-2xl font-semibold text-[#0B2E2C] mb-4">Need something custom?</h2>
+            <p className="text-sm text-[#4A6461] mb-6">We work with research labs, NGOs, and government bodies on tailored data-cleaning pipelines and private deployments.</p>
+            <button onClick={() => setShowContactForm(true)} className="inline-block text-sm font-medium text-white bg-[#028090] rounded-md px-5 py-2.5 hover:bg-[#026c78] transition-colors">Talk to us</button>
+          </div>
+        </section>
+
+        <ContactForm isOpen={showContactForm} onClose={() => setShowContactForm(false)} />
       </main>
     </div>
   );
