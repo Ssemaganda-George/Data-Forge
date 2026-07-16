@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AdminSignOut } from "@/components/admin-sign-out";
 
 export const metadata = { title: "Admin · YoDataSet" };
 
@@ -42,11 +43,7 @@ export default async function AdminLayout({
         </nav>
 
         <div className="px-3 pb-4 border-t border-[#E5E7EB] pt-3">
-          <form action="/api/auth/signout" method="POST">
-            <button type="submit" className="w-full text-left text-sm text-red-600 hover:bg-red-50 rounded-md px-3 py-2 transition-colors">
-              Sign out
-            </button>
-          </form>
+          <AdminSignOut />
         </div>
       </aside>
 
