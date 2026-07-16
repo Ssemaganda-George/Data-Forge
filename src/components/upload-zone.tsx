@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { IconUpload, IconFile, IconX } from "@tabler/icons-react";
 import { cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { AudioRecorder } from "@/components/audio-recorder";
 import type { ProjectModule } from "@prisma/client";
 import {
   DEFAULT_VOICE_LANGUAGE,
@@ -171,6 +172,23 @@ export function UploadZone({
           <p className="mt-1.5 text-xs text-gray-500">
             Transcribed with Sunbird AI and translated to English for review.
           </p>
+        </div>
+      )}
+
+      {isVoiceProject && (
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+          <p className="text-xs font-medium text-gray-700 mb-2">
+            Or record a message
+          </p>
+          <AudioRecorder
+            disabled={uploading}
+            onRecordingComplete={(file) =>
+              setFiles((prev) => [
+                ...prev,
+                { file, id: crypto.randomUUID(), progress: 0, status: "queued" },
+              ])
+            }
+          />
         </div>
       )}
 
