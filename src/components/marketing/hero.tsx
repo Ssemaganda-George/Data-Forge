@@ -39,13 +39,13 @@ export function Hero() {
               Try it free
               <ArrowRight size={16} />
             </Link>
-            <a
-              href="#how-it-works"
+            <Link
+              href="/#how-it-works"
               className="w-full sm:w-auto text-sm font-medium text-[#0B2E2C] border border-[#E5E7EB] rounded-md px-5 py-2.5 hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
             >
               See how it works
               <ArrowRight size={16} />
-            </a>
+            </Link>
           </div>
         </div>
       </div>
