@@ -6,7 +6,7 @@ import { Menu, X, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 const navLinks = [
-  { href: "#product", label: "Product" },
+  { href: "/", label: "Product" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
   { href: "/developers", label: "Developers" },
