@@ -43,6 +43,17 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const redirectUrl = new URL(next, requestUrl.origin);
+  // Behind a reverse proxy (Railway), requestUrl.origin resolves to the
+  // internal container address (e.g. http://0.0.0.0:8080). Use the public
+  // host from x-forwarded-host so the redirect points at the real domain.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto =
+    request.headers.get("x-forwarded-proto") ?? "https";
+  const baseUrl =
+    process.env.NODE_ENV === "development" || !forwardedHost
+      ? requestUrl.origin
+      : `${forwardedProto}://${forwardedHost}`;
+
+  const redirectUrl = new URL(next, baseUrl);
   return NextResponse.redirect(redirectUrl);
 }
