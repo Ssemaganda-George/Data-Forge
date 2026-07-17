@@ -9,7 +9,7 @@ const steps = [
   {
     icon: Upload,
     label: "Upload",
-    description: "Drag in images, PDFs, audio, or spreadsheets — any format, any condition.",
+    description: "Drag in images, PDFs, audio, or spreadsheets, any format, any condition.",
   },
   {
     icon: Sparkles,
@@ -19,7 +19,7 @@ const steps = [
   {
     icon: Eye,
     label: "Review",
-    description: "Confidence-scored results — flagged items surfaced for a quick human check.",
+    description: "Confidence-scored results, flagged items surfaced for a quick human check.",
   },
   {
     icon: Download,
