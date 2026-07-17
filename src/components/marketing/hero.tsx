@@ -21,7 +21,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-4 text-lg text-[#4A6461] leading-relaxed">
-            Upload raw files — images, PDFs, audio, spreadsheets — and get back
+            Upload raw files, images, PDFs, audio, spreadsheets and get back
             clean, structured datasets ready for machine learning.
           </p>
 
@@ -37,14 +37,14 @@ export function Hero() {
               className="w-full sm:w-auto text-sm font-medium text-[#0B2E2C] border border-[#E5E7EB] rounded-md px-5 py-2.5 hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
             >
               Try it free
-              <ArrowRight size={16} />
+              {/* <ArrowRight size={16} /> */}
             </Link>
             <Link
               href="/#how-it-works"
               className="w-full sm:w-auto text-sm font-medium text-[#0B2E2C] border border-[#E5E7EB] rounded-md px-5 py-2.5 hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
             >
               See how it works
-              <ArrowRight size={16} />
+              {/* <ArrowRight size={16} /> */}
             </Link>
           </div>
         </div>
