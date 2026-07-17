@@ -9,7 +9,7 @@ export function ClosingCta() {
           Ready to clean your first dataset?
         </h2>
         <p className="mt-2 text-sm text-[#4A6461]">
-          Free for the first 500MB — no card required.
+          Free for the first 500MBs.
         </p>
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
@@ -23,7 +23,7 @@ export function ClosingCta() {
             className="w-full sm:w-auto text-sm font-medium text-[#0B2E2C] border border-[#E5E7EB] rounded-md px-5 py-2.5 hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
           >
             Try it free
-            <ArrowRight size={16} />
+            {/* <ArrowRight size={16} /> */}
           </Link>
         </div>
       </div>
