@@ -23,20 +23,29 @@ export default function LoginPage() {
   async function handleOAuthSignIn(provider: "github" | "google") {
     setError("");
     setOauthLoading(provider);
+    console.log(`[oauth] starting ${provider} sign in`, {
+      origin: window.location.origin,
+      hasSupabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      hasSupabaseKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
+    });
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+      console.log(`[oauth] ${provider} response`, { data, oauthError });
       if (oauthError) {
-        setError(oauthError.message);
+        setError(`${provider}: ${oauthError.message}`);
         setOauthLoading(null);
       }
-    } catch {
-      setError(`Could not start ${provider} sign in. Please try again.`);
+    } catch (err) {
+      console.error(`[oauth] ${provider} threw`, err);
+      const message =
+        err instanceof Error ? err.message : "Unknown error";
+      setError(`Could not start ${provider} sign in: ${message}`);
       setOauthLoading(null);
     }
   }
