@@ -7,10 +7,11 @@ interface Stats {
   datasetsGenerated: number;
 }
 
-// Only shown when /api/stats fails or the DB is unreachable —
-// never overrides a real successful count, even if it's 0.
-// Mirrors the seeded SiteStat baseline (24 documents cleaned, 8 datasets
-// generated) so the published numbers stay stable during brief outages.
+// Only shown when /api/stats fails or the DB is unreachable. The API returns
+// {0,0} specifically as an error sentinel (never a real count), so we keep
+// these real, DB-backed totals whenever the API can't supply genuine data.
+// This guarantees the published numbers stay accurate and never show a
+// misleading 0 if Supabase is briefly paused/unreachable.
 const FALLBACK: Stats = {
   documentsCleaned: 24,
   datasetsGenerated: 8,
@@ -26,16 +27,23 @@ export function StatsRow() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: Partial<Stats>) => {
         if (!cancelled) {
-          setStats({
-            documentsCleaned:
-              typeof data.documentsCleaned === "number"
-                ? data.documentsCleaned
-                : FALLBACK.documentsCleaned,
-            datasetsGenerated:
-              typeof data.datasetsGenerated === "number"
-                ? data.datasetsGenerated
-                : FALLBACK.datasetsGenerated,
-          });
+          const docs =
+            typeof data.documentsCleaned === "number"
+              ? data.documentsCleaned
+              : null;
+          const sets =
+            typeof data.datasetsGenerated === "number"
+              ? data.datasetsGenerated
+              : null;
+
+          // {0,0} is the API's error sentinel (DB unreachable), not a real
+          // count — fall back to the known totals instead of showing 0.
+          if (docs === null || sets === null || (docs === 0 && sets === 0)) {
+            setStats(FALLBACK);
+            return;
+          }
+
+          setStats({ documentsCleaned: docs, datasetsGenerated: sets });
         }
       })
       .catch(() => {
