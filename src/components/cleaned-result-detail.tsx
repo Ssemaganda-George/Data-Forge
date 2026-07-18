@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, ClipboardList, Languages, AudioLines } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   parseVoiceCleanedContent,
@@ -43,16 +43,7 @@ export function CleanedResultDetail({
           }
         />
 
-        {expandedType === "AI_ANALYSIS" ? (
-          <AiAnalysisPanel content={cleanedContent} />
-        ) : expandedType ? (
-          <ActionDetailPanel
-            type={expandedType}
-            description={
-              actions.find((a) => a.type === expandedType)?.description ?? ""
-            }
-          />
-        ) : null}
+        {renderActionPanel(expandedType, actions, cleanedContent)}
       </div>
 
       <div>
@@ -63,6 +54,46 @@ export function CleanedResultDetail({
       </div>
     </div>
   );
+}
+
+/**
+ * Shared routing for the expanded action panel. Some action types get a rich,
+ * purpose-built panel; everything else falls back to the description.
+ */
+function renderActionPanel(
+  expandedType: string | null,
+  actions: CleaningActionSummary[],
+  cleanedContent: string
+) {
+  if (!expandedType) return null;
+  const description =
+    actions.find((a) => a.type === expandedType)?.description ?? "";
+
+  if (expandedType === "AI_ANALYSIS") {
+    return <AiAnalysisPanel content={cleanedContent} />;
+  }
+  if (expandedType === "DATA_CARD") {
+    return <DataCardPanel description={description} />;
+  }
+  if (expandedType === "SUNBIRD_STT" || expandedType === "AUDIO_TRANSCRIPTION") {
+    return (
+      <VoiceTextPanel
+        cleanedContent={cleanedContent}
+        variant="transcript"
+        fallbackDescription={description}
+      />
+    );
+  }
+  if (expandedType === "SUNBIRD_TRANSLATE") {
+    return (
+      <VoiceTextPanel
+        cleanedContent={cleanedContent}
+        variant="translation"
+        fallbackDescription={description}
+      />
+    );
+  }
+  return <ActionDetailPanel type={expandedType} description={description} />;
 }
 
 /**
@@ -90,16 +121,7 @@ export function CleaningActionsBlock({
           setExpandedType((cur) => (cur === type ? null : type))
         }
       />
-      {expandedType === "AI_ANALYSIS" ? (
-        <AiAnalysisPanel content={cleanedContent} />
-      ) : expandedType ? (
-        <ActionDetailPanel
-          type={expandedType}
-          description={
-            actions.find((a) => a.type === expandedType)?.description ?? ""
-          }
-        />
-      ) : null}
+      {renderActionPanel(expandedType, actions, cleanedContent)}
     </div>
   );
 }
@@ -155,6 +177,103 @@ export function ActionDetailPanel({
       <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
         {description || "No additional details are available for this action."}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Voice transcript / translation panel — shows the actual transcribed source
+ * text or the English translation from the voice payload when the matching
+ * chip (SUNBIRD_STT / AUDIO_TRANSCRIPTION / SUNBIRD_TRANSLATE) is expanded.
+ */
+export function VoiceTextPanel({
+  cleanedContent,
+  variant,
+  fallbackDescription,
+}: {
+  cleanedContent: string;
+  variant: "transcript" | "translation";
+  fallbackDescription: string;
+}) {
+  const voice = parseVoiceCleanedContent(cleanedContent);
+
+  const isTranslation = variant === "translation";
+  const Icon = isTranslation ? Languages : AudioLines;
+  const title = isTranslation ? "English translation" : "Source transcript";
+  const lang = voice?.sourceLanguage?.toUpperCase();
+
+  const text = isTranslation
+    ? voice?.translation?.trim()
+    : voice?.transcript?.trim();
+
+  return (
+    <div className="mt-3 rounded-lg border border-[#E5E7EB] bg-[#F7FAF9] p-4 space-y-2">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#028090] uppercase tracking-wide">
+        <Icon size={13} /> {title}
+        {lang && !isTranslation && (
+          <span className="text-gray-400 font-normal normal-case">· {lang}</span>
+        )}
+      </div>
+      {text ? (
+        <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-white border border-[#E5E7EB] rounded-lg p-3 max-h-64 overflow-y-auto leading-relaxed">
+          {text}
+        </pre>
+      ) : (
+        <p className="text-xs text-gray-500">
+          {isTranslation
+            ? "No translation was produced for this file."
+            : fallbackDescription || "No transcript available for this file."}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Structured "data card" panel — an auditable per-file record of what was
+ * cleaned, changed, or flagged, parsed from the DATA_CARD action description
+ * (format: "Auditable record · key: value · key: value · …").
+ */
+export function DataCardPanel({ description }: { description: string }) {
+  const segments = description
+    .split(" · ")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const rows: { label: string; value: string }[] = [];
+  for (const seg of segments) {
+    const idx = seg.indexOf(":");
+    if (idx === -1) continue; // skip the "Auditable record" label
+    const label = seg.slice(0, idx).trim();
+    const value = seg.slice(idx + 1).trim();
+    if (label && value) rows.push({ label, value });
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-[#E5E7EB] bg-[#F7FAF9] p-4 space-y-3">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#028090] uppercase tracking-wide">
+        <ClipboardList size={13} /> Data card
+      </div>
+      <p className="text-xs text-gray-500">
+        An auditable record of what was cleaned, changed, or flagged on this
+        file — and why.
+      </p>
+      {rows.length > 0 ? (
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+          {rows.map((r) => (
+            <div key={r.label} className="flex flex-col">
+              <dt className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">
+                {r.label}
+              </dt>
+              <dd className="text-xs text-gray-800 break-words">{r.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
+          {description || "No data card available for this file."}
+        </p>
+      )}
     </div>
   );
 }

@@ -251,7 +251,7 @@ async function analyzeTranscriptWithAI(
   transcript: string,
   groqKey: string
 ): Promise<{ aiSection: string; actionDescription: string } | null> {
-  if (!transcript || transcript.split(/\s+/).filter(Boolean).length < 5) {
+  if (!transcript || transcript.split(/\s+/).filter(Boolean).length < 3) {
     return null;
   }
   try {
@@ -286,16 +286,64 @@ async function analyzeTranscriptWithAI(
 }
 
 // ─── Inline processing ───────────────────────────────────────────────────────
-export async function runProcessing(
-  fileType: string,
-  buffer?: Buffer,
-  options?: ProcessingOptions
-): Promise<{
+interface ProcessingResult {
   cleaningActions: CleaningAction[];
   confidenceScore: number;
   flaggedForReview: boolean;
   cleanedContent: string;
-}> {
+}
+
+/**
+ * Public entry point. Runs the file-type pipeline, then appends a DATA_CARD
+ * action to every result so both trial and logged-in files carry an auditable
+ * per-file record of what was cleaned, changed, or flagged — and why.
+ */
+export async function runProcessing(
+  fileType: string,
+  buffer?: Buffer,
+  options?: ProcessingOptions
+): Promise<ProcessingResult> {
+  const result = await runProcessingInner(fileType, buffer, options);
+  return withDataCard(result, fileType, buffer?.length ?? 0);
+}
+
+/**
+ * Append a DATA_CARD cleaning action summarising this file's cleaning outcome.
+ * The description doubles as the human-readable audit line shown when the
+ * DATA_CARD chip is expanded in the UI.
+ */
+function withDataCard(
+  result: ProcessingResult,
+  fileType: string,
+  sizeBytes: number
+): ProcessingResult {
+  const now = new Date().toISOString();
+  const otherActions = result.cleaningActions.filter(
+    (a) => a.type !== "DATA_CARD"
+  );
+  const steps = otherActions.map((a) => a.type).join(", ") || "none";
+  const sizeMb = sizeBytes > 0 ? (sizeBytes / (1024 * 1024)).toFixed(2) : "0";
+  const scorePct = Math.round(result.confidenceScore * 100);
+  const status = result.flaggedForReview ? "flagged for review" : "accepted";
+  const description =
+    `Auditable record · type: ${fileType} · ${sizeMb} MB · ` +
+    `confidence: ${scorePct}% · status: ${status} · ` +
+    `${otherActions.length} step(s): ${steps} · generated ${now}`;
+
+  return {
+    ...result,
+    cleaningActions: [
+      ...otherActions,
+      { type: "DATA_CARD", description, appliedAt: now },
+    ],
+  };
+}
+
+async function runProcessingInner(
+  fileType: string,
+  buffer?: Buffer,
+  options?: ProcessingOptions
+): Promise<ProcessingResult> {
   const now = new Date().toISOString();
 
   // ── Plain text ────────────────────────────────────────────────────────────
@@ -635,10 +683,12 @@ export async function runProcessing(
         }
 
         // AI analysis runs on the English text where available (translation),
-        // otherwise the source transcript.
+        // otherwise the source transcript. Always surface an AI_ANALYSIS action
+        // so the chip appears for every audio file; the report panel explains
+        // the outcome when a full analysis could not be produced.
         let aiReport: string | undefined;
+        const analysisText = translation || transcription;
         if (process.env.GROQ_API_KEY) {
-          const analysisText = translation || transcription;
           const analysis = await analyzeTranscriptWithAI(
             analysisText,
             process.env.GROQ_API_KEY
@@ -650,7 +700,21 @@ export async function runProcessing(
               description: analysis.actionDescription,
               appliedAt: now,
             });
+          } else {
+            cleaningActions.push({
+              type: "AI_ANALYSIS",
+              description:
+                "Transcript too short to analyse or analysis unavailable",
+              appliedAt: now,
+            });
           }
+        } else {
+          cleaningActions.push({
+            type: "AI_ANALYSIS",
+            description:
+              "AI analysis skipped — GROQ_API_KEY not configured on the server",
+            appliedAt: now,
+          });
         }
 
         return {
@@ -764,7 +828,21 @@ export async function runProcessing(
               // Plain timestamped transcript — append the divider block.
               finalContent = content + analysis.aiSection;
             }
+          } else {
+            cleaningActions.push({
+              type: "AI_ANALYSIS",
+              description:
+                "Transcript too short to analyse or analysis unavailable",
+              appliedAt: now,
+            });
           }
+        } else {
+          cleaningActions.push({
+            type: "AI_ANALYSIS",
+            description:
+              "AI analysis skipped — GROQ_API_KEY not configured on the server",
+            appliedAt: now,
+          });
         }
 
         return {
