@@ -24,7 +24,7 @@ const steps = [
   {
     icon: Download,
     label: "Export",
-    description: "Download a clean dataset plus a Data Card documenting exactly what changed.",
+    description: "Download or export a clean dataset plus a Data Card documenting exactly what changed.",
   },
 ];
 
