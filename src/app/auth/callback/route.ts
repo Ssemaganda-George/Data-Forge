@@ -6,7 +6,8 @@ import { importTrialIntoNewAccount } from "@/lib/trial/import";
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  let next = requestUrl.searchParams.get("next") ?? "/dashboard";
+  const explicitRedirect = requestUrl.searchParams.get("redirectTo");
+  let next = explicitRedirect ?? requestUrl.searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const supabase = createSupabaseClient();
@@ -36,7 +37,8 @@ export async function GET(request: NextRequest) {
           data: { lastLoginAt: new Date() },
         }).catch(() => {});
 
-        if (existing.role === "ADMIN") {
+        // Only default admins to /admin when no explicit destination was given.
+        if (existing.role === "ADMIN" && !explicitRedirect) {
           next = "/admin";
         }
       }
