@@ -9,8 +9,10 @@ interface Stats {
 
 // Only shown when /api/stats fails or the DB is unreachable —
 // never overrides a real successful count, even if it's 0.
+// Mirrors the seeded SiteStat baseline (24 documents cleaned, 8 datasets
+// generated) so the published numbers stay stable during brief outages.
 const FALLBACK: Stats = {
-  documentsCleaned: 35,
+  documentsCleaned: 24,
   datasetsGenerated: 8,
 };
 

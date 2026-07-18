@@ -8,6 +8,10 @@ import {
 } from "@/lib/export-builder";
 import { pushToGitHub, pushToKaggle } from "@/lib/export-destinations";
 import { resolveExportFiles } from "@/lib/export-scope";
+import {
+  incrementSiteStat,
+  DATASETS_GENERATED_KEY,
+} from "@/lib/site-stats";
 
 const exportSchema = z.object({
   batchId: z.string(),
@@ -68,6 +72,7 @@ export async function POST(req: NextRequest) {
         title?.trim() || defaultTitle
       );
       await db.datasetExport.create({ data: { batchId, format } });
+      await incrementSiteStat(DATASETS_GENERATED_KEY, 1);
       return NextResponse.json({ ok: true, ...result, dataCard });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Kaggle upload failed";
@@ -88,6 +93,7 @@ export async function POST(req: NextRequest) {
         tag?.trim()
       );
       await db.datasetExport.create({ data: { batchId, format } });
+      await incrementSiteStat(DATASETS_GENERATED_KEY, 1);
       return NextResponse.json({ ok: true, ...result, dataCard });
     } catch (err) {
       const message = err instanceof Error ? err.message : "GitHub upload failed";
@@ -98,6 +104,7 @@ export async function POST(req: NextRequest) {
   const exportRecord = await db.datasetExport.create({
     data: { batchId, format },
   });
+  await incrementSiteStat(DATASETS_GENERATED_KEY, 1);
 
   const filename = `yodataset-${batchId.slice(0, 8)}-${format.toLowerCase()}.zip`;
   return new NextResponse(zipBuffer as unknown as BodyInit, {

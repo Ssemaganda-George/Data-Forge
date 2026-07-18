@@ -189,7 +189,7 @@ export function TrialWidget() {
 
       {phase === "done" && result && (
         <div
-          className="space-y-4 select-none [user-select:none]"
+          className="space-y-4 select-none"
           onCopy={(e) => e.preventDefault()}
           onContextMenu={(e) => e.preventDefault()}
         >
@@ -328,7 +328,7 @@ function TrialCleanedView({
           Confidence score: {Math.round(score * 100)}%
         </p>
       )}
-      <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-[#F7FAF9] border border-[#E5E7EB] rounded-lg p-3 max-h-64 overflow-y-auto leading-relaxed select-none [user-select:none]">
+      <pre         className="whitespace-pre-wrap font-mono text-xs text-gray-700 bg-[#F7FAF9] border border-[#E5E7EB] rounded-lg p-3 max-h-64 overflow-y-auto leading-relaxed select-none">
         {voice ? voice.transcript || content : content}
       </pre>
     </div>
@@ -379,7 +379,7 @@ function AiAnalysisPanel({ content }: { content: string }) {
     .filter(Boolean);
 
   return (
-    <div className="mt-3 rounded-lg border border-[#E5E7EB] bg-[#F7FAF9] p-4 space-y-3 select-none [user-select:none]">
+    <div className="mt-3 rounded-lg border border-[#E5E7EB] bg-[#F7FAF9] p-4 space-y-3 select-none">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-[#028090] uppercase tracking-wide">
         <Sparkles size={13} /> AI report
       </div>
