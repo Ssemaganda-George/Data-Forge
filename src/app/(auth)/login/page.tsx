@@ -190,6 +190,18 @@ export default function LoginPage() {
         </Button>
       </form>
 
+      <p className="mt-4 text-center text-xs text-[#4A6461]">
+        By continuing, you agree to our{" "}
+        <Link href="/terms" className="text-[#028090] hover:underline">
+          Terms &amp; Conditions
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="text-[#028090] hover:underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+
       <p className="mt-6 text-center text-xs text-[#4A6461]">
         No account?{" "}
         <Link href="/signup" className="text-[#028090] hover:underline">

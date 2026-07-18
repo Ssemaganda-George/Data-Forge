@@ -18,6 +18,7 @@ import {
 import { Navbar } from "@/components/marketing/navbar";
 import { Footer } from "@/components/marketing/footer";
 import { FaqAccordion } from "@/components/marketing/faq-accordion";
+import { LanguageRoutingDiagram } from "@/components/marketing/language-routing-diagram";
 
 export const metadata = {
   title: "Product · YoDataSet",
@@ -68,6 +69,7 @@ const useCases = [
     title: "Language and voice studio",
     example:
       "Upload 50 Luganda voice memos and get back a labeled speech corpus, tagged by speaker and dialect.",
+    credit: "Powered by Sunbird AI for African languages",
   },
   {
     icon: FileSpreadsheet,
@@ -221,9 +223,19 @@ export default function ProductPage() {
                   <p className="mt-2 text-sm text-[#4A6461] leading-relaxed">
                     {u.example}
                   </p>
+                  {u.credit && (
+                    <p className="mt-2 text-[11px] text-[#8A9E9C]">
+                      {u.credit}
+                    </p>
+                  )}
                 </div>
               );
             })}
+          </div>
+
+          {/* Language routing diagram — sits directly below the use-case grid */}
+          <div className="mt-8">
+            <LanguageRoutingDiagram />
           </div>
         </section>
 

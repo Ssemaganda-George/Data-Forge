@@ -49,6 +49,8 @@ export type VoiceCleanedPayload = {
   sourceLanguage: string;
   transcript: string;
   translation?: string;
+  /** Formatted AI ANALYSIS block (divider-delimited), when generated. */
+  aiReport?: string;
 };
 
 export function parseVoiceCleanedContent(raw: string): VoiceCleanedPayload | null {

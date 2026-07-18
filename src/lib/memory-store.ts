@@ -23,7 +23,8 @@ function buildVoicePayload(
   provider: "sunbird" | "groq",
   sourceLanguage: string,
   transcript: string,
-  translation?: string
+  translation?: string,
+  aiReport?: string
 ): string {
   return JSON.stringify({
     kind: "voice",
@@ -31,6 +32,7 @@ function buildVoicePayload(
     sourceLanguage,
     transcript,
     translation: translation && translation !== transcript ? translation : undefined,
+    aiReport: aiReport && aiReport.trim() ? aiReport.trim() : undefined,
   });
 }
 
@@ -238,8 +240,52 @@ async function analyzeEmbeddedImages(
   return results;
 }
 
-// ─── Inline processing ───────────────────────────────────────────────────────
+// ─── Transcript AI analysis ───────────────────────────────────────────────────
 
+/**
+ * Analyse an audio/video transcript and return a formatted "AI ANALYSIS"
+ * divider block (same convention as PDF/DOCX) plus a short action summary.
+ * Returns nulls on failure so callers can degrade gracefully.
+ */
+async function analyzeTranscriptWithAI(
+  transcript: string,
+  groqKey: string
+): Promise<{ aiSection: string; actionDescription: string } | null> {
+  if (!transcript || transcript.split(/\s+/).filter(Boolean).length < 5) {
+    return null;
+  }
+  try {
+    const ai = (await analyzePDFWithAI(transcript, groqKey)) as {
+      document_type?: string;
+      summary?: string;
+      key_entities?: Record<string, string[]>;
+      qa_pairs?: Array<{ question: string; answer: string }>;
+      tags?: string[];
+    };
+    const div = "═".repeat(60);
+    const entityLines = Object.entries(ai.key_entities ?? {})
+      .filter(([, v]) => Array.isArray(v) && v.length > 0)
+      .map(([k, v]) => `  ${k.replace(/_/g, " ")}: ${(v as string[]).join(", ")}`)
+      .join("\n");
+    const qaPairs = (ai.qa_pairs ?? [])
+      .map((p, i) => `Q${i + 1}: ${p.question}\nA${i + 1}: ${p.answer}`)
+      .join("\n\n");
+    const aiSection =
+      `\n\n${div}\nAI ANALYSIS\n${div}\n\n` +
+      `Document Type: ${ai.document_type ?? "Audio transcript"}\n` +
+      `Tags: ${(ai.tags ?? []).join(", ")}\n\n` +
+      `Summary:\n${ai.summary ?? ""}\n\n` +
+      (entityLines ? `Key Entities:\n${entityLines}\n\n` : "") +
+      (qaPairs ? `Q&A Training Pairs (${(ai.qa_pairs ?? []).length}):\n${qaPairs}` : "");
+    const actionDescription = `Classified as "${ai.document_type}" · ${(ai.qa_pairs ?? []).length} Q&A pairs · ${(ai.tags ?? []).length} tags`;
+    return { aiSection, actionDescription };
+  } catch (err) {
+    console.error("[YoDataSet] Transcript AI analysis error:", err);
+    return null;
+  }
+}
+
+// ─── Inline processing ───────────────────────────────────────────────────────
 export async function runProcessing(
   fileType: string,
   buffer?: Buffer,
@@ -588,6 +634,25 @@ export async function runProcessing(
           });
         }
 
+        // AI analysis runs on the English text where available (translation),
+        // otherwise the source transcript.
+        let aiReport: string | undefined;
+        if (process.env.GROQ_API_KEY) {
+          const analysisText = translation || transcription;
+          const analysis = await analyzeTranscriptWithAI(
+            analysisText,
+            process.env.GROQ_API_KEY
+          );
+          if (analysis) {
+            aiReport = analysis.aiSection;
+            cleaningActions.push({
+              type: "AI_ANALYSIS",
+              description: analysis.actionDescription,
+              appliedAt: now,
+            });
+          }
+        }
+
         return {
           cleaningActions,
           confidenceScore: translation ? 0.93 : 0.9,
@@ -596,7 +661,8 @@ export async function runProcessing(
             "sunbird",
             sourceLang,
             transcription,
-            translation
+            translation,
+            aiReport
           ),
         };
       } catch (err) {
@@ -666,14 +732,46 @@ export async function runProcessing(
         const content =
           options?.module === "LANGUAGE_VOICE" ? groqPayload : cleanedContent;
 
+        const cleaningActions: CleaningAction[] = [
+          { type: "AUDIO_TRANSCRIPTION", description: `Whisper Large v3 · ${wordCount.toLocaleString()} words · ${duration}`, appliedAt: now },
+          { type: "LANGUAGE_DETECT", description: `Language detected: ${lang}`, appliedAt: now },
+        ];
+
+        // ── AI analysis on the transcript ────────────────────────────────
+        let finalContent = content;
+        if (process.env.GROQ_API_KEY) {
+          const analysis = await analyzeTranscriptWithAI(
+            json.text.trim(),
+            process.env.GROQ_API_KEY
+          );
+          if (analysis) {
+            cleaningActions.push({
+              type: "AI_ANALYSIS",
+              description: analysis.actionDescription,
+              appliedAt: now,
+            });
+            if (options?.module === "LANGUAGE_VOICE") {
+              // Re-encode the voice payload with the AI report embedded so the
+              // JSON stays parseable.
+              finalContent = buildVoicePayload(
+                "groq",
+                lang,
+                json.text.trim(),
+                undefined,
+                analysis.aiSection
+              );
+            } else {
+              // Plain timestamped transcript — append the divider block.
+              finalContent = content + analysis.aiSection;
+            }
+          }
+        }
+
         return {
-          cleaningActions: [
-            { type: "AUDIO_TRANSCRIPTION", description: `Whisper Large v3 · ${wordCount.toLocaleString()} words · ${duration}`, appliedAt: now },
-            { type: "LANGUAGE_DETECT", description: `Language detected: ${lang}`, appliedAt: now },
-          ],
+          cleaningActions,
           confidenceScore: 0.94,
           flaggedForReview: false,
-          cleanedContent: content,
+          cleanedContent: finalContent,
         };
       } catch (err) {
         console.error("[YoDataSet] Groq Whisper error:", err);
@@ -803,6 +901,10 @@ export async function runProcessing(
         };
 
         // ── Groq AI analysis ──────────────────────────────────────────────
+        // AI insights are stored as structured JSON under `ai_insights`. The
+        // trial widget / emailed report parse this via extractAiReport(), so
+        // spreadsheets keep pure-JSON cleanedContent (no text divider block)
+        // to stay parseable by the export builder and cleaned-output view.
         if (process.env.GROQ_API_KEY) {
           try {
             const ai = await analyzeSpreadsheetWithAI(columns, rows, process.env.GROQ_API_KEY);

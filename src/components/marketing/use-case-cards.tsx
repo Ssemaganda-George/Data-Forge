@@ -11,6 +11,7 @@ const useCases = [
     title: "Language and voice studio",
     description:
       "Transcribe audio, translate African-language speech, and build voice datasets with confidence scoring and speaker metadata.",
+    credit: "Powered by Sunbird AI for African languages",
   },
   {
     icon: Table,
@@ -42,6 +43,9 @@ export function UseCaseCards() {
             <p className="text-xs text-[#4A6461] leading-relaxed">
               {item.description}
             </p>
+            {item.credit && (
+              <p className="mt-2 text-[11px] text-[#8A9E9C]">{item.credit}</p>
+            )}
           </div>
         ))}
       </div>

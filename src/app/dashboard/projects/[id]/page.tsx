@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import { requireServerSession } from "@/lib/auth";
 import {
   batchStatusToBadge,
-  fileStatusToBadge,
   getProjectDetail,
   moduleLabel,
 } from "@/lib/project-queries";
 import { Badge } from "@/components/ui/badge";
 import { ProjectUploadPanel } from "@/components/project-upload-panel";
+import { ProjectFilesTable } from "@/components/project-files-table";
 import {
   IconArrowLeft,
   IconSettings,
@@ -125,53 +125,12 @@ export default async function ProjectPage({
           <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <h2 className="text-sm font-semibold text-gray-900">Files</h2>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Click a file to see its cleaning actions, AI report, and cleaned
+                output.
+              </p>
             </div>
-            {project.files.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-gray-500">
-                No files yet. Upload documents above to start processing.
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                      Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                      Status
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">
-                      Score
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {project.files.map((f) => (
-                    <tr key={f.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-800">
-                        {f.name}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">
-                        {f.type}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={fileStatusToBadge(f.status, f.flagged)}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">
-                        {f.score !== null
-                          ? `${(f.score * 100).toFixed(0)}%`
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            <ProjectFilesTable files={project.files} />
           </div>
         </div>
 
