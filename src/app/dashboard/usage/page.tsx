@@ -6,6 +6,8 @@ import { PLANS, CURRENT_PLAN_ID } from "@/lib/plans";
 import { DEFAULT_TOP_UP_PACK } from "@/lib/pricing/plans";
 
 export const metadata: Metadata = { title: "Usage" };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function UsagePage() {
   const session = await requireServerSession();

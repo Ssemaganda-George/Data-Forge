@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       );
       await db.datasetExport.create({ data: { batchId, format } });
       await incrementSiteStat(DATASETS_GENERATED_KEY, 1);
+      revalidatePath("/dashboard");
       return NextResponse.json({ ok: true, ...result, dataCard });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Kaggle upload failed";
@@ -94,6 +96,7 @@ export async function POST(req: NextRequest) {
       );
       await db.datasetExport.create({ data: { batchId, format } });
       await incrementSiteStat(DATASETS_GENERATED_KEY, 1);
+      revalidatePath("/dashboard");
       return NextResponse.json({ ok: true, ...result, dataCard });
     } catch (err) {
       const message = err instanceof Error ? err.message : "GitHub upload failed";
@@ -105,6 +108,7 @@ export async function POST(req: NextRequest) {
     data: { batchId, format },
   });
   await incrementSiteStat(DATASETS_GENERATED_KEY, 1);
+  revalidatePath("/dashboard");
 
   const filename = `yodataset-${batchId.slice(0, 8)}-${format.toLowerCase()}.zip`;
   return new NextResponse(zipBuffer as unknown as BodyInit, {

@@ -37,6 +37,12 @@ export function Footer() {
             >
               Developers
             </Link>
+            <Link
+              href="/customers"
+              className="text-sm text-[#4A6461] hover:text-[#0B2E2C] transition-colors"
+            >
+              Customers
+            </Link>
           </nav>
         </div>
         <p className="mt-6 text-xs text-[#4A6461]">

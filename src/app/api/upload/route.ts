@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { authenticateRequest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { runProcessing } from "@/lib/memory-store";
@@ -152,6 +153,13 @@ export async function POST(req: NextRequest) {
       where: { id: batch.id },
       select: { status: true },
     });
+
+    // Invalidate cached dashboard/usage/project views so cumulative stats
+    // (files processed, avg quality, usage) reflect this upload immediately.
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/usage");
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/dashboard/projects/${projectId}`);
 
     return NextResponse.json(
       {

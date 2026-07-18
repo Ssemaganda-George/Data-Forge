@@ -26,6 +26,8 @@ import {
 import { formatNumber } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function DashboardPage() {
   const session = await requireServerSession();
