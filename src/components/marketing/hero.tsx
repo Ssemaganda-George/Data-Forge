@@ -21,7 +21,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-4 text-lg text-[#4A6461] leading-relaxed">
-            Upload anything. Get back a dataset that's already deduplicated, labeled, and ready for your model.
+            Upload anything. Get back a dataset that&apos;s already deduplicated, labeled, and ready for your model.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
