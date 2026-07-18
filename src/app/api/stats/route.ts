@@ -16,6 +16,9 @@ export async function GET() {
 
     // Trial (anonymous) activity, persisted incrementally in SiteStat so it is
     // not lost between sessions. Starts at 0 and grows with each trial clean.
+    // IMPORTANT: SiteStat must ONLY count anonymous trial cleans. Authenticated
+    // cleans already have FileRecord/Dataset rows counted above, so they must
+    // not also be added to SiteStat or the totals will be double-counted.
     const [trialDocs, trialDatasets] = await Promise.all([
       getSiteStat(DOCUMENTS_CLEANED_KEY),
       getSiteStat(DATASETS_GENERATED_KEY),

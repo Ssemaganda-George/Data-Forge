@@ -135,14 +135,12 @@ export async function POST(req: NextRequest) {
       data: { updatedAt: new Date() },
     });
 
-    // Increment the persistent "documents cleaned" counter.
-    try {
-      const { incrementSiteStat, DOCUMENTS_CLEANED_KEY } =
-        await import("@/lib/site-stats");
-      await incrementSiteStat(DOCUMENTS_CLEANED_KEY, 1);
-    } catch (statErr) {
-      console.error("[upload POST] stat increment error:", statErr);
-    }
+    // NOTE: We intentionally do NOT increment SiteStat[documentsCleaned] here.
+    // Authenticated uploads are persisted as FileRecord rows and are already
+    // counted by db.fileRecord.count() in /api/stats. Incrementing the SiteStat
+    // as well would double-count every authenticated clean. The SiteStat is
+    // reserved for anonymous trial cleans (see /api/trial/clean), which have no
+    // FileRecord row.
 
     const updatedBatch = await db.uploadBatch.findUnique({
       where: { id: batch.id },
