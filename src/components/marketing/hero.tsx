@@ -17,12 +17,11 @@ export function Hero() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-[620px] text-center">
           <h1 className="text-4xl md:text-5xl font-semibold text-[#0B2E2C] leading-tight tracking-tight">
-            Garbage in. Clean, model-ready data out.
+            Raw files in. Clean, model-ready data out.
           </h1>
 
           <p className="mt-4 text-lg text-[#4A6461] leading-relaxed">
-            Upload raw files, images, PDFs, audio, spreadsheets and get back
-            clean, structured datasets ready for machine learning.
+            Upload anything. Get back a dataset that's already deduplicated, labeled, and ready for your model.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
