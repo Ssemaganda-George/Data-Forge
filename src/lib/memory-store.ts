@@ -127,14 +127,18 @@ interface ImageAnalysisResult {
  * a general "photo" (describe it), then fill in only the relevant sections.
  */
 function parseImageAnalysisResponse(raw: string): ImageAnalysisResult {
-  const classMatch = raw.match(/CLASSIFICATION:\s*(document|photo)/i);
+  // Defensive: strip any reasoning block the model might emit despite
+  // reasoning_effort:"none" (e.g. future model/version changes).
+  const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+  const classMatch = cleaned.match(/CLASSIFICATION:\s*(document|photo)/i);
   const classification = (classMatch?.[1]?.toLowerCase() ?? "photo") as
     | "document"
     | "photo";
 
   const grab = (label: string): string => {
     const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n[A-Z_]+:|$)`, "i");
-    return raw.match(re)?.[1]?.trim() ?? "";
+    return cleaned.match(re)?.[1]?.trim() ?? "";
   };
 
   return {
@@ -245,7 +249,8 @@ async function analyzeEmbeddedImages(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          model: "qwen/qwen3.6-27b",
+          reasoning_effort: "none",
           messages: [{
             role: "user",
             content: [
@@ -627,7 +632,8 @@ async function runProcessingInner(
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+            model: "qwen/qwen3.6-27b",
+            reasoning_effort: "none",
             messages: [{
               role: "user",
               content: [
@@ -648,7 +654,7 @@ async function runProcessingInner(
                 },
               ],
             }],
-            max_tokens: 2048,
+            max_tokens: 4096,
           }),
         });
         if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
