@@ -15,8 +15,12 @@ const FALLBACK: Stats = {
   datasetsGenerated: 8,
 };
 
-export function StatsRow() {
-  const [stats, setStats] = useState<Stats>(FALLBACK);
+export function StatsRow({
+  initialStats,
+}: {
+  initialStats?: Stats | null;
+} = {}) {
+  const [stats, setStats] = useState<Stats>(initialStats ?? FALLBACK);
 
   useEffect(() => {
     let cancelled = false;
