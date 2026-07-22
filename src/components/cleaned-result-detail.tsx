@@ -323,6 +323,8 @@ export function AiAnalysisPanel({ content }: { content: string }) {
     "Anomalies",
     "Normalization Suggestions",
     "ML Readiness Score",
+    "Key Details",
+    "Expected Output",
   ];
 
   for (const line of lines) {

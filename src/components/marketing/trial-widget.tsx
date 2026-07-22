@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone, type FileRejection } from "react-dropzone";
-import { Check, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { Check, ImageIcon, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type CleaningActionSummary } from "@/lib/project-ui";
 import {
@@ -35,6 +35,22 @@ interface TrialResultData {
 }
 
 type Phase = "idle" | "uploading" | "done" | "error";
+
+/**
+ * Customise the success banner for images based on how the file was
+ * classified server-side — document (text extracted) vs. general photo
+ * (described) — so the message matches what the user actually gets.
+ */
+function successMessage(result: TrialResultData): string {
+  const classification = result.cleaningActions.find(
+    (a) => a.type === "IMAGE_CLASSIFICATION"
+  );
+  if (!classification) return "Cleaned in seconds — here's your result";
+  if (classification.description.toLowerCase().includes("general photo")) {
+    return "Image analysed — here's what we found";
+  }
+  return "Text extracted from your image — here's your result";
+}
 
 export function TrialWidget() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -103,6 +119,8 @@ export function TrialWidget() {
     multiple: false,
     maxSize: MAX_BYTES,
   });
+
+  const isImage = file?.type.startsWith("image/") ?? false;
 
   async function cleanNow() {
     if (!file) return;
@@ -180,27 +198,38 @@ export function TrialWidget() {
             </p>
           </div>
           {file && (
-            <div className="mt-4 flex items-center justify-between bg-[#F7FAF9] border border-[#E5E7EB] rounded-lg px-4 py-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <Check size={16} className="text-green-600 shrink-0" />
-                <span className="text-sm font-medium text-gray-800 truncate">
-                  {file.name}
-                </span>
-                <span className="text-xs text-gray-400 shrink-0">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </span>
+            <div className="mt-4 bg-[#F7FAF9] border border-[#E5E7EB] rounded-lg px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Check size={16} className="text-green-600 shrink-0" />
+                  <span className="text-sm font-medium text-gray-800 truncate">
+                    {file.name}
+                  </span>
+                  <span className="text-xs text-gray-400 shrink-0">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={reset} className="text-gray-400 hover:text-gray-600">
+                    <X size={16} />
+                  </button>
+                  <button
+                    onClick={cleanNow}
+                    className="text-sm font-medium text-white bg-[#028090] rounded-md px-3 py-1.5 hover:bg-[#026c78] transition-colors"
+                  >
+                    {isImage ? "Continue to analyse" : "Clean it"}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={reset} className="text-gray-400 hover:text-gray-600">
-                  <X size={16} />
-                </button>
-                <button
-                  onClick={cleanNow}
-                  className="text-sm font-medium text-white bg-[#028090] rounded-md px-3 py-1.5 hover:bg-[#026c78] transition-colors"
-                >
-                  Clean it
-                </button>
-              </div>
+              {isImage && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-[#4A6461]">
+                  <ImageIcon size={13} className="mt-0.5 shrink-0 text-[#028090]" />
+                  This is an image. We&apos;ll check whether it&apos;s a photographed
+                  page of text (like a textbook or document) — and extract that
+                  text — or a general photo, in which case we&apos;ll describe
+                  what&apos;s in it and suggest how it could be used.
+                </p>
+              )}
             </div>
           )}
         </>
@@ -209,7 +238,9 @@ export function TrialWidget() {
       {phase === "uploading" && (
         <div className="py-10 text-center">
           <Loader2 size={28} className="mx-auto mb-3 animate-spin text-[#028090]" />
-          <p className="text-sm text-[#4A6461]">Cleaning your file…</p>
+          <p className="text-sm text-[#4A6461]">
+            {isImage ? "Analysing your image…" : "Cleaning your file…"}
+          </p>
         </div>
       )}
 
@@ -224,7 +255,7 @@ export function TrialWidget() {
           onContextMenu={(e) => e.preventDefault()}
         >
           <div className="flex items-center justify-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-100 rounded-lg py-2">
-            <Check size={16} /> Cleaned in seconds — here&apos;s your result
+            <Check size={16} /> {successMessage(result)}
           </div>
 
           <div>

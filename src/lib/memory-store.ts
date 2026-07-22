@@ -111,6 +111,42 @@ function mimeToAudioExt(mimeType: string): string {
   return map[mimeType] ?? "mp3";
 }
 
+interface ImageAnalysisResult {
+  classification: "document" | "photo";
+  extractedText: string;
+  description: string;
+  keyDetails: string;
+  expectedOutput: string;
+  tags: string;
+}
+
+/**
+ * Parse the plain-text, header-delimited response from the standalone image
+ * vision prompt (see the "Image" branch of runProcessingInner). The model is
+ * asked to classify the image as a photographed "document" (extract text) or
+ * a general "photo" (describe it), then fill in only the relevant sections.
+ */
+function parseImageAnalysisResponse(raw: string): ImageAnalysisResult {
+  const classMatch = raw.match(/CLASSIFICATION:\s*(document|photo)/i);
+  const classification = (classMatch?.[1]?.toLowerCase() ?? "photo") as
+    | "document"
+    | "photo";
+
+  const grab = (label: string): string => {
+    const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n[A-Z_]+:|$)`, "i");
+    return raw.match(re)?.[1]?.trim() ?? "";
+  };
+
+  return {
+    classification,
+    extractedText: grab("EXTRACTED_TEXT"),
+    description: grab("DESCRIPTION"),
+    keyDetails: grab("KEY_DETAILS"),
+    expectedOutput: grab("EXPECTED_OUTPUT"),
+    tags: grab("TAGS"),
+  };
+}
+
 interface GroqChatResponse {
   choices: [{ message: { content: string } }];
 }
@@ -596,26 +632,67 @@ async function runProcessingInner(
               role: "user",
               content: [
                 { type: "image_url", image_url: { url: `data:${fileType};base64,${base64}` } },
-                { type: "text", text: "Extract all text from this image exactly as it appears. Preserve the original layout, structure, tables, and formatting as closely as possible. Return only the extracted text with no additional commentary." },
+                {
+                  type: "text",
+                  text:
+                    "Look at this image and decide what kind of image it is, then respond in EXACTLY this plain-text format (no markdown fences, no extra commentary):\n\n" +
+                    "CLASSIFICATION: document OR photo\n" +
+                    "(Use \"document\" if this is a photo of a page with primarily readable body text — e.g. a textbook page, printed document, whiteboard, or handwritten notes. Use \"photo\" for a general photograph, scene, object, chart, or anything without substantial readable body text.)\n\n" +
+                    "If CLASSIFICATION is document, include ONLY this section:\n" +
+                    "EXTRACTED_TEXT:\n<the full text extracted verbatim, preserving the original layout, structure, tables, and formatting as closely as possible>\n\n" +
+                    "If CLASSIFICATION is photo, include ONLY these sections:\n" +
+                    "DESCRIPTION:\n<a thorough 3-5 sentence description of what the image shows: setting, subjects, objects, actions, colors, and notable elements>\n" +
+                    "KEY_DETAILS:\n<a bulleted list (one per line, starting with \"-\") of concrete observed facts, e.g. object/people counts, dominant colors, visible brands or text, notable elements>\n" +
+                    "EXPECTED_OUTPUT:\n<one paragraph suggesting how this image could be used or labeled as ML/dataset output, e.g. object detection labels, scene classification, captioning>\n" +
+                    "TAGS:\n<comma-separated topic tags>",
+                },
               ],
             }],
-            max_tokens: 8192,
+            max_tokens: 2048,
           }),
         });
         if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
         const json = await res.json() as { choices: [{ message: { content: string } }] };
-        const text = json.choices[0].message.content.trim();
-        const wordCount = text.split(/\s+/).filter(Boolean).length;
-        const emails = (text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) ?? []).length;
+        const raw = json.choices[0].message.content.trim();
+        const parsed = parseImageAnalysisResponse(raw);
+
+        if (parsed.classification === "document") {
+          const text = parsed.extractedText || raw;
+          const wordCount = text.split(/\s+/).filter(Boolean).length;
+          const emails = (text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) ?? []).length;
+          return {
+            cleaningActions: [
+              { type: "IMAGE_CLASSIFICATION", description: "Detected as a photographed document/text page", appliedAt: now },
+              { type: "OCR_EXTRACTION", description: `Groq vision model · ${wordCount.toLocaleString()} words extracted`, appliedAt: now },
+              { type: "METADATA_STRIP", description: "EXIF metadata removed", appliedAt: now },
+              { type: "PII_REDACTION", description: emails > 0 ? `${emails} email(s) detected — review before sharing` : "PII scan completed — 0 items found", appliedAt: now },
+            ],
+            confidenceScore: 0.93,
+            flaggedForReview: emails > 3,
+            cleanedContent: text,
+          };
+        }
+
+        // ── General photo: descriptive report, not a fake OCR attempt ──────
+        const div = "═".repeat(60);
+        const aiSection =
+          `\n\n${div}\nAI ANALYSIS (general photo)\n${div}\n\n` +
+          `Document Type: General photo\n` +
+          `Tags: ${parsed.tags || "—"}\n\n` +
+          `Summary:\n${parsed.description || "No description was generated."}\n\n` +
+          `Key Details:\n${parsed.keyDetails || "—"}\n\n` +
+          `Expected Output:\n${parsed.expectedOutput || "—"}`;
+
         return {
           cleaningActions: [
-            { type: "OCR_EXTRACTION", description: `Groq vision model · ${wordCount.toLocaleString()} words extracted`, appliedAt: now },
+            { type: "IMAGE_CLASSIFICATION", description: "Detected as a general photo (no substantial body text found)", appliedAt: now },
+            { type: "IMAGE_ANALYSIS", description: "Scene, objects, and key details analysed via Groq vision", appliedAt: now },
+            { type: "AI_ANALYSIS", description: `Classified as "General photo" · ${parsed.tags ? parsed.tags.split(",").filter((t) => t.trim()).length : 0} tags`, appliedAt: now },
             { type: "METADATA_STRIP", description: "EXIF metadata removed", appliedAt: now },
-            { type: "PII_REDACTION", description: emails > 0 ? `${emails} email(s) detected — review before sharing` : "PII scan completed — 0 items found", appliedAt: now },
           ],
-          confidenceScore: 0.93,
-          flaggedForReview: emails > 3,
-          cleanedContent: text,
+          confidenceScore: 0.9,
+          flaggedForReview: false,
+          cleanedContent: aiSection.trim(),
         };
       } catch (err) {
         console.error("[YoDataSet] Groq vision error:", err);
@@ -634,6 +711,7 @@ async function runProcessingInner(
         : "[Stub — set GROQ_API_KEY in .env.local to enable real OCR]",
     };
   }
+
 
   // ── Audio / Video ─────────────────────────────────────────────────────────
   if (fileType.startsWith("audio/") || fileType.startsWith("video/")) {
