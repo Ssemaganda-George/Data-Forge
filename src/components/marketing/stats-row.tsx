@@ -7,11 +7,9 @@ interface Stats {
   datasetsGenerated: number;
 }
 
-// Only shown when /api/stats fails or the DB is unreachable. The API returns
-// {0,0} specifically as an error sentinel (never a real count), so we keep
+// Only shown when /api/stats fails or the DB is unreachable. We keep
 // these real, DB-backed totals whenever the API can't supply genuine data.
-// This guarantees the published numbers stay accurate and never show a
-// misleading 0 if Supabase is briefly paused/unreachable.
+// This avoids exposing a broken landing page if the stats endpoint is down.
 const FALLBACK: Stats = {
   documentsCleaned: 24,
   datasetsGenerated: 8,
@@ -36,7 +34,7 @@ export function StatsRow() {
         const sets =
           typeof data.datasetsGenerated === "number" ? data.datasetsGenerated : null;
 
-        if (docs === null || sets === null || (docs === 0 && sets === 0)) {
+        if (docs === null || sets === null) {
           setStats(FALLBACK);
           return;
         }

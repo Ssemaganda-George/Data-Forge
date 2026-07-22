@@ -33,7 +33,17 @@ export async function incrementSiteStat(
 
 export async function getSiteStat(key: string): Promise<number> {
   const row = await db.siteStat.findUnique({ where: { key } });
-  return row?.value ?? DEFAULT_BASE;
+  if (row) return row.value;
+
+  if (key === DOCUMENTS_CLEANED_KEY) {
+    return db.fileRecord.count({ where: { status: "COMPLETE" } });
+  }
+
+  if (key === DATASETS_GENERATED_KEY) {
+    return db.datasetExport.count();
+  }
+
+  return DEFAULT_BASE;
 }
 
 /**
