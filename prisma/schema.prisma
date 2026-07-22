@@ -3,7 +3,13 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  // "native" for local dev, "linux-musl-openssl-3.0.x" for the Railway/Docker
+  // (Alpine) deployment, and "rhel-openssl-3.0.x" for Vercel serverless
+  // functions (Amazon Linux 2023 runtime). Without the rhel target, Prisma
+  // fails to load its query engine on Vercel and every DB call throws,
+  // silently falling back to error-sentinel values (e.g. the stats API's
+  // hardcoded fallback numbers never change).
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
