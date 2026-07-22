@@ -23,35 +23,40 @@ export function StatsRow() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/stats")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: Partial<Stats>) => {
-        if (!cancelled) {
-          const docs =
-            typeof data.documentsCleaned === "number"
-              ? data.documentsCleaned
-              : null;
-          const sets =
-            typeof data.datasetsGenerated === "number"
-              ? data.datasetsGenerated
-              : null;
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/stats", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load stats");
+        const data: Partial<Stats> = await res.json();
 
-          // {0,0} is the API's error sentinel (DB unreachable), not a real
-          // count — fall back to the known totals instead of showing 0.
-          if (docs === null || sets === null || (docs === 0 && sets === 0)) {
-            setStats(FALLBACK);
-            return;
-          }
+        if (cancelled) return;
 
-          setStats({ documentsCleaned: docs, datasetsGenerated: sets });
+        const docs =
+          typeof data.documentsCleaned === "number" ? data.documentsCleaned : null;
+        const sets =
+          typeof data.datasetsGenerated === "number" ? data.datasetsGenerated : null;
+
+        if (docs === null || sets === null || (docs === 0 && sets === 0)) {
+          setStats(FALLBACK);
+          return;
         }
-      })
-      .catch(() => {
+
+        setStats({ documentsCleaned: docs, datasetsGenerated: sets });
+      } catch {
         if (!cancelled) setStats(FALLBACK);
-      });
+      }
+    }
+
+    fetchStats();
+
+    const interval = window.setInterval(fetchStats, 10000);
+    const handleFocus = () => fetchStats();
+    window.addEventListener("focus", handleFocus);
 
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
