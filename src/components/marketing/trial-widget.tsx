@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, type FileRejection } from "react-dropzone";
 import { Check, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type CleaningActionSummary } from "@/lib/project-ui";
@@ -69,8 +69,36 @@ export function TrialWidget() {
     []
   );
 
+  // react-dropzone routes files that fail its own `accept`/`maxSize` checks
+  // into fileRejections instead of calling onDrop, so those cases must be
+  // handled separately or they fail silently with no feedback to the user.
+  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+    const rejection = fileRejections[0];
+    if (!rejection) return;
+
+    setResult(null);
+    setFile(null);
+
+    const codes = rejection.errors.map((e) => e.code);
+    if (codes.includes("file-too-large")) {
+      const sizeMb = (rejection.file.size / 1024 / 1024).toFixed(2);
+      setError(
+        `"${rejection.file.name}" is ${sizeMb} MB, which is larger than the 5 MB trial limit.`
+      );
+    } else if (codes.includes("file-invalid-type")) {
+      setError(
+        "Unsupported file. Use PDF, JPG, PNG, CSV, or XLSX (audio is excluded from the trial)."
+      );
+    } else if (codes.includes("too-many-files")) {
+      setError("Only one file can be uploaded at a time in the trial.");
+    } else {
+      setError(rejection.errors[0]?.message ?? "That file couldn't be uploaded.");
+    }
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: ACCEPT,
     multiple: false,
     maxSize: MAX_BYTES,
